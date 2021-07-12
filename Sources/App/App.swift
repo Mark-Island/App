@@ -20,6 +20,13 @@ import FairApp
     public static func main() throws { try Self.launch() }
 }
 
+public extension Bundle {
+    /// The URL for the App's resource bundle
+    static var appBundleURL: URL! {
+        Bundle.module.url(forResource: "Bundle", withExtension: nil)
+    }
+}
+
 // Everything above this line must remain unmodified.
 
 // Code your app in the AppScene and ContentView below.

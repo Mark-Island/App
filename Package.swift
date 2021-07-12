@@ -31,8 +31,8 @@ let package = Package(
     targets: [
         .target(name: "App", dependencies: [
             .product(name: "FairApp", package: "Fair")
-        ]
-        + externalDependencies().flatMap(\.targets)),
+        ] + externalDependencies().flatMap(\.targets),
+            resources: [.copy("Bundle")]),
         .target(name: "Tool", dependencies: [
             .product(name: "FairCore", package: "Fair")
         ]),
