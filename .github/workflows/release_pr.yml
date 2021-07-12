@@ -55,8 +55,8 @@ jobs:
       - name: Checkout Base Repository
         uses: actions/checkout@v2
 
-      - name: Checking IndieTool
-        run: swift run indietool welcome
+      - name: Checking FairTool
+        run: swift run fairtool welcome
 
       - name: Checkout PR
         uses: actions/checkout@v2
@@ -67,7 +67,7 @@ jobs:
           submodules: false
 
       - name: Validating PR
-        run: swift run indietool validate -p ReleasePR/
+        run: swift run fairtool validate -p ReleasePR/
 
       - name: Importing PR
         run: |
@@ -80,7 +80,7 @@ jobs:
       - name: Validate Package.resolved
         run: |
           swift package resolve
-          swift run indietool validate -p . -l https://github.com/
+          swift run fairtool validate -p . -l https://github.com/
 
       - name: Update Info
         run: |
