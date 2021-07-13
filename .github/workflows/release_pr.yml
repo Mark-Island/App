@@ -15,7 +15,7 @@
 #
 # This action runs whenever a PR is created.
 #
-# It will merge the validated "Package.swift" and "App.swift" sources and 
+# It will merge the validated "Package.swift" and "Source/" sources and 
 # build and release an "App-Org.zip" package for end-user installation.
 #
 
