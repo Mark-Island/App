@@ -40,8 +40,10 @@ jobs:
           echo "TAG: ${{ github.event.inputs.branch }}"
           echo "ORGNAME: ${{ github.event.pull_request.head.user.login }}"
           echo "ORGNAME=${{ github.event.pull_request.head.user.login }}" >> $GITHUB_ENV
-          echo "SHA: ${{ github.event.pull_request.head.sha }}"
+          echo "COMMITHASH: ${{ github.event.pull_request.head.sha }}"
           echo "COMMITHASH=${{ github.event.pull_request.head.sha }}" >> $GITHUB_ENV
+          echo "PRID: ${{ github.event.pull_request.id }}"
+          echo "PRID=${{ github.event.pull_request.id }}" >> $GITHUB_ENV
 
       - name: Configure App Name
         run: |
@@ -95,6 +97,7 @@ jobs:
             CODE_SIGNING_ALLOWED=YES \
             PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
             MARKETING_VERSION="${{ env.COMMITHASH }}" \
+            CURRENT_PROJECT_VERSION="${{ env.PRID }}" \
             FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}" 
 
       - uses: actions/upload-artifact@v2
