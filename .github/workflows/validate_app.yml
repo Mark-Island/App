@@ -41,6 +41,10 @@ jobs:
       - name: Validate App
         run: swift run fairtool validate
 
-      - run: xcodebuild build -workspace App.xcworkspace -configuration Release -scheme "Application" -sdk 'macosx' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
-      - run: xcodebuild build -workspace App.xcworkspace -configuration Release -scheme "Application" -sdk 'iphoneos' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+      - name: Build macOS
+        run: xcodebuild build -workspace App.xcworkspace -configuration Release -scheme "Application" -sdk 'macosx' CODE_SIGNING_REQUIRED=YES CODE_SIGNING_ALLOWED=YES
+
+      - name: Build iOS
+        run: xcodebuild build -workspace App.xcworkspace -configuration Release -scheme "Application" -sdk 'iphoneos' CODE_SIGNING_REQUIRED=YES CODE_SIGNING_ALLOWED=YES
+
 
