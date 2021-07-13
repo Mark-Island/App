@@ -58,6 +58,7 @@ jobs:
       - name: "Validate App Org: ${{ github.repository_owner }}"
         run: swift run fairtool validate --verbose true --hub github.com --org "${{ github.repository_owner }}" --token "${{ secrets.GITHUB_TOKEN }}" --project .
 
+
       - name: Checkout PR
         uses: actions/checkout@v2
         with:
