@@ -39,7 +39,7 @@ jobs:
       #- run: swift test # cannot run until macos-11 is available
 
       - name: Validate App
-        run: swift run fairtool validate
+        run: swift run fairtool validate --verbose true --hub github.com --org "${{ github.event.pull_request.head.user.login }}" --project .
 
       - name: Build macOS
         run: xcodebuild build -workspace App.xcworkspace -configuration Release -scheme "Application" -sdk 'macosx' CODE_SIGNING_REQUIRED=YES CODE_SIGNING_ALLOWED=YES
