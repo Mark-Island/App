@@ -138,4 +138,3 @@ jobs:
           automatic_release_tag: "${{ env.APP_ARTIFACT }}"
           files: staging/${{ env.APP_ARTIFACT }}.zip
 
-
