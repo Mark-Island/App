@@ -48,7 +48,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Validate App
-        run: swift run fairtool validate --verbose true --hub github.com --org "${{ github.event.pull_request.head.user.login }}" --project .
+        run: swift run fairtool validate --verbose true --hub github.com --token "${{ secrets.GITHUB_TOKEN }}" --org "${{ github.event.pull_request.head.user.login }}" --project .
 
       - name: Build macOS
         run: xcodebuild build -workspace App.xcworkspace -configuration Release -scheme "Application" -sdk 'macosx' CODE_SIGNING_REQUIRED=YES CODE_SIGNING_ALLOWED=YES
