@@ -1,5 +1,4 @@
 .*.swp
-# We permit modification of projects, but note that they won't be used during deployment
 #*.xcworkspace
 #*.xcodeproj
 .DS_Store
