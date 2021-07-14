@@ -20,7 +20,8 @@
 name: App Vaidation
 on:
   push:
-    branches: *
+    branches: 
+      - '*'
 
 jobs:
   Validate:
