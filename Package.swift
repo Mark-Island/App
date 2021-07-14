@@ -22,7 +22,7 @@ let package = Package(
     ],
     products: [
         .library(name: "App", targets: ["App"]),
-        .executable(name: "apptool", targets: ["Tool"]),
+        .executable(name: "fairtool", targets: ["Tool"]),
     ],
     dependencies: [
         .package(url: "https://github.com/appfair/Fair.git", .branch("main"))
