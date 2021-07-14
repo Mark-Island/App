@@ -21,8 +21,7 @@ let package = Package(
         .macOS(.v11), .iOS(.v14), .tvOS(.v14), .watchOS(.v7)
     ],
     products: [
-        .library(name: "App", targets: ["App"]),
-        .executable(name: "fairtool", targets: ["Tool"]),
+        .library(name: "App", targets: ["App"])
     ],
     dependencies: [
         .package(url: "https://github.com/appfair/Fair.git", .branch("main"))
