@@ -49,7 +49,7 @@ jobs:
         run: |
           echo "APP_ARTIFACT=${{ env.ORGNAME }}" >> $GITHUB_ENV
           echo "PRODUCT_NAME=$(echo ${{ env.ORGNAME }} | tr '-' ' ')" >> $GITHUB_ENV
-          echo "BUNDLE_ID=app.$(echo ${{ env.ORGNAME }})'" >> $GITHUB_ENV
+          echo "BUNDLE_ID=app.$(echo ${{ env.ORGNAME }})" >> $GITHUB_ENV
 
       - name: Show Product
         run: |
