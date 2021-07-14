@@ -47,10 +47,9 @@ jobs:
 
       - name: Configure App Name
         run: |
-          echo "ORGNAME=${{ env.ORGNAME }}"
           echo "APP_ARTIFACT=${{ env.ORGNAME }}" >> $GITHUB_ENV
           echo "PRODUCT_NAME=$(echo ${{ env.ORGNAME }} | tr '-' ' ')" >> $GITHUB_ENV
-          echo "BUNDLE_ID=app.$(echo ${{ env.ORGNAME }} | tr -d '-')" >> $GITHUB_ENV
+          echo "BUNDLE_ID=app.$(echo ${{ env.ORGNAME }})'" >> $GITHUB_ENV
 
       - name: Show Product
         run: |
