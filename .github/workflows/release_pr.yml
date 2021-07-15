@@ -29,8 +29,11 @@ jobs:
     # the App-Org name is the org that submitted the PR
     name: "Release ${{ github.event.pull_request.head.user.login }}"
     if: github.event_name == 'pull_request_target' 
-    #runs-on: macos-latest
     runs-on: macos-11
+    timeout-minutes: 10
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_13.app/Contents/Developer
+
     steps:
       - name: Show Info
         env:
@@ -58,8 +61,8 @@ jobs:
       - name: Checkout Base Repository
         uses: actions/checkout@v2
 
-      - name: "Validate App Org: ${{ github.event.pull_request.head.user.login }}"
-        run: swift run fairtool validate --verbose true --hub github.com --org "${{ github.event.pull_request.head.user.login }}" --token "${{ secrets.GITHUB_TOKEN }}" --project .
+      - name: "Validate App Org: ${{ env.ORGNAME }}"
+        run: swift run fairtool validate --verbose true --hub github.com --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project .
 
       - name: Checkout PR
         uses: actions/checkout@v2
@@ -70,12 +73,13 @@ jobs:
           submodules: false
 
       - name: Merging PR
-        run: swift run fairtool merge --verbose true --hub github.com --org "${{ github.event.pull_request.head.user.login }}" --token "${{ secrets.GITHUB_TOKEN }}" --project ReleasePR --output .
+        run: swift run fairtool merge --verbose true --hub github.com --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project ReleasePR --output .
 
       - name: Validate Package.resolved
         run: |
           swift package resolve
           swift run fairtool validate --project . --hub github.com 
+          #swift run fairtool edit --project . --hub github.com --bundle-id "${{ env.BUNDLE_ID }}" --display-name "${{ env.PRODUCT_NAME }}"
 
       - name: Update Info
         run: |
