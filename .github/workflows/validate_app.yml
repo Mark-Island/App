@@ -26,7 +26,8 @@ on:
 jobs:
   Validate:
     if: github.event_name != 'pull_request_target'
-    runs-on: macos-latest
+    #runs-on: macos-latest
+    runs-on: macos-11
 
     # You can run integration tests
     # only if your org is whitelisted for macos-11

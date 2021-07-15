@@ -29,8 +29,8 @@ jobs:
     # the App-Org name is the org that submitted the PR
     name: "Release ${{ github.event.pull_request.head.user.login }}"
     if: github.event_name == 'pull_request_target' 
-    runs-on: macos-latest
-    #runs-on: macos-11
+    #runs-on: macos-latest
+    runs-on: macos-11
     steps:
       - name: Show Info
         env:
