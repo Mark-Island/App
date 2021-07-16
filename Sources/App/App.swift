@@ -662,31 +662,42 @@ struct ReleasesTableView: View {
             Group {
                 TableColumn("Name", value: \FairHub.ReleaseInfo.name)
 
-//                nameColumn
-//                createdColumn
-//                publishedColumn
+                TableColumn("Created", value: \FairHub.ReleaseInfo.created_at, comparator: DateComparator()) { release in
+                    Text(release.created_at.localizedDate(dateStyle: .short, timeStyle: .short))
+                }
+                TableColumn("Published", value: \FairHub.ReleaseInfo.published_at, comparator: DateComparator()) { release in
+                    Text(release.published_at.localizedDate(dateStyle: .short, timeStyle: .short))
+                }
             }
 
-//            Group {
-//                stateColumn
-//                downloadsColumn
-//                downloadSizeColumn
-//            }
+            Group {
+                TableColumn("State", value: \FairHub.ReleaseInfo.assets.first?.state, comparator: StringComparator()) { release in
+                    Text(release.assets.first?.state ?? "N/A")
+                }
+                TableColumn("Downloads", value: \FairHub.ReleaseInfo.assets.first?.download_count, comparator: NumericComparator()) { release in
+                    Text(release.assets.first?.download_count.localizedNumber() ?? "N/A")
+                }
+                TableColumn("Size", value: \FairHub.ReleaseInfo.assets.first?.size, comparator: NumericComparator()) { release in
+                    Text(release.assets.first?.size.localizedByteCount(countStyle: .file) ?? "N/A")
+                }
+            }
 
-//            Group {
-//                TableColumn("Draft", value: \FairHub.ReleaseInfo.draft, comparator: BoolComparator()) { release in
-//                    Toggle(isOn: .constant(release.draft)) { EmptyView () }
-//                }
-//                TableColumn("Pre-Release", value: \FairHub.ReleaseInfo.prerelease.description) { release in
-//                    Toggle(isOn: .constant(release.prerelease)) { EmptyView () }
-//                }
-//            }
-//
-//            Group {
+            Group {
+                TableColumn("Draft", value: \FairHub.ReleaseInfo.draft, comparator: BoolComparator()) { release in
+                    Toggle(isOn: .constant(release.draft)) { EmptyView () }
+                }
+                TableColumn("Pre-Release", value: \FairHub.ReleaseInfo.prerelease.description) { release in
+                    Toggle(isOn: .constant(release.prerelease)) { EmptyView () }
+                }
+            }
+
+            Group {
 //                //downloadColumn
-//                tagColumn
-//                bodyColumn
-//            }
+                TableColumn("Tag", value: \FairHub.ReleaseInfo.tag_name)
+                TableColumn("Info", value: \FairHub.ReleaseInfo.body) { release in
+                    Text((try? release.body.atx()) ?? "No info")
+                }
+            }
         }
         .onChange(of: sortOrder) {
             fair.releases.sort(using: $0)
@@ -703,54 +714,6 @@ struct ReleasesTableView: View {
 //        }
 //    }
 
-//    private var XXXColumn: some TableColumnContent {
-//        TableColumn("XXX", value: \FairHub.ReleaseInfo.XXX)
-//    }
-
-    private var nameColumn: some TableColumnContent {
-        TableColumn("Name", value: \FairHub.ReleaseInfo.name)
-    }
-
-    private var createdColumn: some TableColumnContent {
-        TableColumn("Created", value: \FairHub.ReleaseInfo.created_at, comparator: DateComparator()) { release in
-            Text(release.created_at.localizedDate(dateStyle: .short, timeStyle: .short))
-        }
-    }
-
-    private var publishedColumn: some TableColumnContent {
-        TableColumn("Published", value: \FairHub.ReleaseInfo.published_at, comparator: DateComparator()) { release in
-            Text(release.published_at.localizedDate(dateStyle: .short, timeStyle: .short))
-        }
-    }
-
-    private var stateColumn: some TableColumnContent {
-        TableColumn("State", value: \FairHub.ReleaseInfo.assets.first?.state, comparator: StringComparator()) { release in
-            Text(release.assets.first?.state ?? "N/A")
-        }
-    }
-
-    private var downloadsColumn: some TableColumnContent {
-        TableColumn("Downloads", value: \FairHub.ReleaseInfo.assets.first?.download_count, comparator: NumericComparator()) { release in
-            Text(release.assets.first?.download_count.localizedNumber() ?? "N/A")
-        }
-    }
-
-    private var downloadSizeColumn: some TableColumnContent {
-        TableColumn("Size", value: \FairHub.ReleaseInfo.assets.first?.size, comparator: NumericComparator()) { release in
-            Text(release.assets.first?.size.localizedByteCount(countStyle: .file) ?? "N/A")
-        }
-    }
-
-    private var tagColumn: some TableColumnContent {
-        TableColumn("Tag", value: \FairHub.ReleaseInfo.tag_name)
-
-    }
-
-    private var bodyColumn: some TableColumnContent {
-        TableColumn("Info", value: \FairHub.ReleaseInfo.body) { release in
-            Text((try? release.body.atx()) ?? "No info")
-        }
-    }
 }
 
 
