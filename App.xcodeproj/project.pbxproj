@@ -7,13 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4955541D268931C4003F1B5B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4955541C268931C4003F1B5B /* Assets.xcassets */; };
+		4924977A26A1B10600260999 /* App.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4924977926A1B10600260999 /* App.xcassets */; };
 		498DD184268CDB4600B79D43 /* App in Frameworks */ = {isa = PBXBuildFile; productRef = 498DD183268CDB4600B79D43 /* App */; };
+		49D8AC8126A1C30700679067 /* App.icns in Resources */ = {isa = PBXBuildFile; fileRef = 49D8AC8026A1C30700679067 /* App.icns */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		4924977926A1B10600260999 /* App.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = App.xcassets; sourceTree = "<group>"; };
 		49555415268931C1003F1B5B /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		4955541C268931C4003F1B5B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		49D8AC8026A1C30700679067 /* App.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = App.icns; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -38,7 +40,8 @@
 		4955540C268931C1003F1B5B = {
 			isa = PBXGroup;
 			children = (
-				4955541C268931C4003F1B5B /* Assets.xcassets */,
+				49D8AC8026A1C30700679067 /* App.icns */,
+				4924977926A1B10600260999 /* App.xcassets */,
 				49555416268931C1003F1B5B /* Products */,
 				49372E752689388E00100F18 /* Frameworks */,
 			);
@@ -55,9 +58,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		49555414268931C1003F1B5B /* App */ = {
+		49555414268931C1003F1B5B /* Application */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "App" */;
+			buildConfigurationList = 49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "Application" */;
 			buildPhases = (
 				49555411268931C1003F1B5B /* Sources */,
 				49555412268931C1003F1B5B /* Frameworks */,
@@ -102,7 +105,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				49555414268931C1003F1B5B /* App */,
+				49555414268931C1003F1B5B /* Application */,
 			);
 		};
 /* End PBXProject section */
@@ -112,7 +115,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4955541D268931C4003F1B5B /* Assets.xcassets in Resources */,
+				49D8AC8126A1C30700679067 /* App.icns in Resources */,
+				4924977A26A1B10600260999 /* App.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -133,6 +137,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_STANDALONE_ICON_BEHAVIOR = all;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -194,6 +199,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_STANDALONE_ICON_BEHAVIOR = all;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -248,21 +254,21 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "App.entitlements";
+				CODE_SIGN_ENTITLEMENTS = App.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				FAIRAPP_PRODUCT_NAME = "App";
-				INFOPLIST_FILE = "App.plist";
+				FAIRAPP_PRODUCT_NAME = App;
+				INFOPLIST_FILE = App.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				PRODUCT_BUNDLE_IDENTIFIER = app.App;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "app.App-Fair";
 				PRODUCT_NAME = "$(FAIRAPP_PRODUCT_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
@@ -273,21 +279,21 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "App.entitlements";
+				CODE_SIGN_ENTITLEMENTS = App.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				FAIRAPP_PRODUCT_NAME = "App";
-				INFOPLIST_FILE = "App.plist";
+				FAIRAPP_PRODUCT_NAME = App;
+				INFOPLIST_FILE = App.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				PRODUCT_BUNDLE_IDENTIFIER = app.App;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "app.App-Fair";
 				PRODUCT_NAME = "$(FAIRAPP_PRODUCT_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
@@ -306,7 +312,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "App" */ = {
+		49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "Application" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				49555426268931C4003F1B5B /* Debug */,
