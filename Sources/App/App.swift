@@ -13,15 +13,15 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import FairApp
-import Foundation
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 @main public struct AppScene : FairApp.FairScene {
-    @ObservedObject public var appEnv: FairManager = FairManager()
+    @ObservedObject public var appEnv = AppEnv()
     public var settings : some View {
         AppSettingsView()
             .environmentObject(appEnv)
     }
+
     public init() { }
     public static func main() throws { try Self.launch() }
 }
@@ -59,7 +59,12 @@ public extension AppScene {
 
             CommandMenu("Fair") {
                 Button("Reload") {
-                    Task { await appEnv.reloadResults() }
+                    let start = CFAbsoluteTimeGetCurrent()
+                    Task {
+                        await appEnv.reloadResults()
+                        let end = CFAbsoluteTimeGetCurrent()
+                        print("reload:", end - start)
+                    }
                 }
                 .keyboardShortcut("R")
 
@@ -71,6 +76,9 @@ public extension AppScene {
         }
     }
 }
+
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+public typealias AppEnv = FairManager
 
 /// The manager for the current app fair
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
@@ -109,11 +117,15 @@ public extension FairManager {
         self.searchSelected = true
     }
 
+    func fetchReleases() async throws -> [FairHub.ReleaseInfo] {
+        try await hub.requestAsync(listReleases)
+    }
+
     func reloadResults() async {
         self.releases = []
 
         do {
-            self.releases = try await hub.requestAsync(listReleases)
+            self.releases = try await fetchReleases()
         } catch {
             errors.append(error)
         }
