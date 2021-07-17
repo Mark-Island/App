@@ -16,11 +16,10 @@ import Swift
 import XCTest
 @testable import App
 
-open class AppTests: XCTestCase {
+final class AppTests: XCTestCase {
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    open func testAppScene() throws {
-        let _ = AppContainer().rootScene
-        let _ = AppContainer().settingsView
+    func testToolArgs() throws {
+        let _ = AppScene()
     }
 }
 
