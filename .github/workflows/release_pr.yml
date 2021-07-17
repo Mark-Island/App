@@ -62,7 +62,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: "Validate App Org: ${{ env.ORGNAME }}"
-        run: swift run fairtool validate --verbose true --hub github.com --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project .
+        run: xcrun swift run fairtool validate --verbose true --hub github.com --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project .
 
       - name: Checkout PR
         uses: actions/checkout@v2
@@ -73,13 +73,13 @@ jobs:
           submodules: false
 
       - name: Merging PR
-        run: swift run fairtool merge --verbose true --hub github.com --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project ReleasePR --output .
+        run: xcrun swift run fairtool merge --verbose true --hub github.com --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project ReleasePR --output .
 
       - name: Validate Package.resolved
         run: |
-          swift package resolve
-          swift run fairtool validate --project . --hub github.com 
-          #swift run fairtool edit --project . --hub github.com --bundle-id "${{ env.BUNDLE_ID }}" --display-name "${{ env.PRODUCT_NAME }}"
+          xcrun swift package resolve
+          xcrun swift run fairtool validate --project . --hub github.com 
+          #xcrun swift run fairtool edit --project . --hub github.com --bundle-id "${{ env.BUNDLE_ID }}" --display-name "${{ env.PRODUCT_NAME }}"
 
       - name: Update Info
         run: |
