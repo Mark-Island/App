@@ -17,6 +17,7 @@ import XCTest
 @testable import App
 
 final class AppTests: XCTestCase {
+    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
     func testToolArgs() throws {
         let _ = AppScene()
     }

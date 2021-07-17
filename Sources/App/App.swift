@@ -692,7 +692,13 @@ struct ReleasesTableView: View {
             }
 
             Group {
-//                //downloadColumn
+                TableColumn("Download", value: \FairHub.ReleaseInfo.assets.first?.browser_download_url.lastPathComponent, comparator: StringComparator()) { release in
+                    //Text(release.assets.first?.state ?? "N/A")
+                    //Toggle(isOn: .constant(release.draft)) { EmptyView () }
+                    if let asset = release.assets.first {
+                        Link("Download \(asset.size.localizedByteCount(countStyle: .file))", destination: asset.browser_download_url)
+                    }
+                }
                 TableColumn("Tag", value: \FairHub.ReleaseInfo.tag_name)
                 TableColumn("Info", value: \FairHub.ReleaseInfo.body) { release in
                     Text((try? release.body.atx()) ?? "No info")
@@ -703,16 +709,6 @@ struct ReleasesTableView: View {
             fair.releases.sort(using: $0)
         }
     }
-
-//    private var downloadColumn: TableColumn {
-//        TableColumn("Download", value: \FairHub.ReleaseInfo.assets.first?.browser_download_url.lastPathComponent) { release in
-//            //Text(release.assets.first?.state ?? "N/A")
-//            //Toggle(isOn: .constant(release.draft)) { EmptyView () }
-//            if let url = release.assets.first?.browser_download_url {
-//                Link(url: url)
-//            }
-//        }
-//    }
 
 }
 
