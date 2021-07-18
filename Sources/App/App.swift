@@ -664,15 +664,9 @@ struct ReleasesTableView: View {
             }
 
             Group {
-                TableColumn("Stars", value: \AppRelease.repo.stargazers_count, comparator: NumericComparator()) { release in
-                    Text(release.repo.stargazers_count.localizedNumber())
-                }
-                TableColumn("Issues", value: \AppRelease.repo.open_issues_count, comparator: NumericComparator()) { release in
-                    Text(release.repo.open_issues_count.localizedNumber())
-                }
-                TableColumn("Forks", value: \AppRelease.repo.forks, comparator: NumericComparator()) { release in
-                    Text(release.repo.forks.localizedNumber())
-                }
+                numericColumn(named: "Stars", path: \.repo.stargazers_count)
+                numericColumn(named: "Issues", path: \.repo.open_issues_count)
+                numericColumn(named: "Forks", path: \.repo.forks)
             }
 
             Group {
@@ -688,12 +682,8 @@ struct ReleasesTableView: View {
             }
 
             Group {
-                TableColumn("Draft", value: \AppRelease.rel.draft, comparator: BoolComparator()) { release in
-                    Toggle(isOn: .constant(release.rel.draft)) { EmptyView () }
-                }
-                TableColumn("Pre-Release", value: \AppRelease.rel.prerelease.description) { release in
-                    Toggle(isOn: .constant(release.rel.prerelease)) { EmptyView () }
-                }
+                boolColumn(named: "Draft", path: \.rel.draft)
+                boolColumn(named: "Pre-Release", path: \.rel.prerelease)
             }
 
             Group {
@@ -710,8 +700,21 @@ struct ReleasesTableView: View {
                 }
             }
         }
+        .font(Font.body.monospacedDigit())
         .onChange(of: sortOrder) {
             fair.apps.sort(using: $0)
+        }
+    }
+
+    func numericColumn<T: BinaryInteger>(named key: LocalizedStringKey, path: KeyPath<AppRelease, T>) -> TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text> {
+        TableColumn(key, value: path, comparator: NumericComparator()) { release in
+            Text(release[keyPath: path].localizedNumber())
+        }
+    }
+
+    func boolColumn(named key: LocalizedStringKey, path: KeyPath<AppRelease, Bool>) -> TableColumn<AppRelease, KeyPathComparator<AppRelease>, Toggle<EmptyView>, Text> {
+        TableColumn(key, value: path, comparator: BoolComparator()) { release in
+            Toggle(isOn: .constant(release[keyPath: path])) { EmptyView () }
         }
     }
 }
@@ -764,10 +767,10 @@ struct StringComparator : SortComparator {
 }
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-struct NumericComparator : SortComparator {
+struct NumericComparator<N: Numeric & Comparable> : SortComparator {
     var order: SortOrder = SortOrder.forward
 
-    func compare(_ lhs: Int, _ rhs: Int) -> ComparisonResult {
+    func compare(_ lhs: N, _ rhs: N) -> ComparisonResult {
         lhs < rhs ? reorder(.orderedAscending) : lhs > rhs ? reorder(.orderedDescending) : .orderedSame
     }
 }
