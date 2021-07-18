@@ -260,7 +260,6 @@ struct GeneralSettingsView: View {
             }
         }
         .padding(20)
-        .frame(width: 350, height: 100)
     }
 }
 
@@ -268,40 +267,77 @@ struct GeneralSettingsView: View {
 struct AdvancedSettingsView: View {
     @EnvironmentObject var fair: FairManager
 
+    func checkButton(_ parts: String...) -> some View {
+        EmptyView()
+//        Group {
+//            Image(systemName: "checkmark.square.fill").aspectRatio(contentMode: .fit).foregroundColor(.green)
+//            Image(systemName: "xmark.square.fill").aspectRatio(contentMode: .fit).foregroundColor(.red)
+//        }
+    }
+
     var body: some View {
-        Form {
-            TextField("Hub", text: fair.$hubHost)
-            TextField("Organization", text: fair.$hubOrg)
-            TextField("Repository", text: fair.$hubRepo)
-            SecureField("Token", text: fair.$hubToken)
-            //Text("The token is only needed for advanced API usage. One can be created at:") + Link("XXX", destination: URL(string: fair.hubOrg)!)
+        VStack {
+            Form {
+                HStack {
+                    TextField("Hub", text: fair.$hubHost)
+                    checkButton(fair.hubHost)
+                }
+                HStack {
+                    TextField("Organization", text: fair.$hubOrg)
+                    checkButton(fair.hubHost, fair.hubOrg)
+                }
+                HStack {
+                    TextField("Repository", text: fair.$hubRepo)
+                    checkButton(fair.hubHost, fair.hubOrg, fair.hubRepo)
+                }
+                HStack {
+                    SecureField("Token", text: fair.$hubToken)
+                }
+
+                Text(atx: "The token is optional, and is only needed for development or advanced usage. One can be created at your [GitHub Personal access token](https://github.com/settings/tokens) setting").multilineTextAlignment(.trailing)
+
+                HelpButton(url: "https://github.com/settings/tokens")
+            }
+            .padding(20)
         }
-        .padding(20)
-        .frame(width: 350, height: 100)
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+public struct HelpButton : View {
+    let url: String
+    @Environment(\.openURL) var openURL
+
+    public var body: some View {
+        Button(role: .none, action: {
+            if let url = URL(string: url) {
+                openURL(url)
+            }
+        }) {
+            //Image(systemName: "questionmark.circle.fill")
+            Image(systemName: "questionmark")
+        }
+        .buttonStyle(.bordered)
     }
 }
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 public struct AppSettingsView: View {
-    private enum Tabs: Hashable {
+    public enum Tabs: Hashable {
         case general, advanced
     }
 
     public var body: some View {
         TabView {
             GeneralSettingsView()
-                .tabItem {
-                    Label("General", systemImage: "gear")
-                }
+                .tabItem { Label("General", systemImage: "gear") }
                 .tag(Tabs.general)
             AdvancedSettingsView()
-                .tabItem {
-                    Label("Advanced", systemImage: "star")
-                }
+                .tabItem { Label("Advanced", systemImage: "star") }
                 .tag(Tabs.advanced)
         }
         .padding(20)
-        .frame(width: 375, height: 150)
+        .frame(width: 500)
     }
 }
 
@@ -357,11 +393,11 @@ public extension AppCategory {
         public var localizedTitle: LocalizedStringKey {
             switch self {
             case .create: return "Create"
-            case .research: return "Knowledge"
-            case .game: return "Games"
-            case .entertain: return "Sports & Entertainment"
+            case .research: return "Learn"
+            case .game: return "Game"
+            case .entertain: return "Watch"
             case .work: return "Work"
-            case .live: return "Health & Lifestyle"
+            case .live: return "Live"
             }
         }
 
@@ -643,8 +679,10 @@ struct ImageDetailsView: View {
     }
 }
 
+
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-struct ReleasesTableView: View {
+struct ReleasesTableView: View, TableColumnFactory {
+    typealias TableItemRoot = AppRelease
     @EnvironmentObject var fair: FairManager
     @State private var selection: AppRelease.ID? = nil
     @State private var sortOrder = [KeyPathComparator(\AppRelease.rel.created_at)]
@@ -655,12 +693,8 @@ struct ReleasesTableView: View {
                 TableColumn("Name", value: \AppRelease.rel.name)
                 TableColumn("Organization", value: \AppRelease.repo.owner.login)
 
-                TableColumn("Created", value: \AppRelease.rel.created_at, comparator: DateComparator()) { release in
-                    Text(release.rel.created_at.localizedDate(dateStyle: .short, timeStyle: .short))
-                }
-                TableColumn("Published", value: \AppRelease.rel.published_at, comparator: DateComparator()) { release in
-                    Text(release.rel.published_at.localizedDate(dateStyle: .short, timeStyle: .short))
-                }
+                dateColumn(named: "Created", path: \.rel.created_at)
+                dateColumn(named: "Published", path: \.rel.published_at)
             }
 
             Group {
@@ -670,12 +704,9 @@ struct ReleasesTableView: View {
             }
 
             Group {
-                TableColumn("State", value: \AppRelease.rel.assets.first?.state, comparator: StringComparator()) { release in
-                    Text(release.rel.assets.first?.state ?? "N/A")
-                }
-                TableColumn("Downloads", value: \AppRelease.rel.assets.first?.download_count, comparator: OptionalNumericComparator()) { release in
-                    Text(release.rel.assets.first?.download_count.localizedNumber() ?? "N/A")
-                }
+                strColumn(named: "State", path: \.rel.assets.first?.state)
+                numColumn(named: "Downloads", path: \.rel.assets.first?.download_count)
+
                 TableColumn("Size", value: \AppRelease.rel.assets.first?.size, comparator: OptionalNumericComparator()) { release in
                     Text(release.rel.assets.first?.size.localizedByteCount(countStyle: .file) ?? "N/A")
                 }
@@ -700,21 +731,48 @@ struct ReleasesTableView: View {
                 }
             }
         }
+        .tableStyle(.inset(alternatesRowBackgrounds: false))
         .font(Font.body.monospacedDigit())
         .onChange(of: sortOrder) {
             fair.apps.sort(using: $0)
         }
     }
+}
 
-    func numericColumn<T: BinaryInteger>(named key: LocalizedStringKey, path: KeyPath<AppRelease, T>) -> TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text> {
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+protocol TableColumnFactory {
+    associatedtype TableItemRoot : Identifiable
+}
+
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+extension TableColumnFactory {
+    func dateColumn(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, Date>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Text, Text> {
+        TableColumn(key, value: path, comparator: DateComparator()) { release in
+            Text(release[keyPath: path].localizedDate(dateStyle: .short, timeStyle: .short))
+        }
+    }
+
+    func numericColumn<T: BinaryInteger>(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, T>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Text, Text> {
         TableColumn(key, value: path, comparator: NumericComparator()) { release in
             Text(release[keyPath: path].localizedNumber())
         }
     }
 
-    func boolColumn(named key: LocalizedStringKey, path: KeyPath<AppRelease, Bool>) -> TableColumn<AppRelease, KeyPathComparator<AppRelease>, Toggle<EmptyView>, Text> {
+    func boolColumn(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, Bool>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Toggle<EmptyView>, Text> {
         TableColumn(key, value: path, comparator: BoolComparator()) { release in
             Toggle(isOn: .constant(release[keyPath: path])) { EmptyView () }
+        }
+    }
+
+    func strColumn(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, String?>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Text, Text> {
+        TableColumn(key, value: path, comparator: StringComparator()) { release in
+            Text(release[keyPath: path] ?? "")
+        }
+    }
+
+    func numColumn<T: BinaryInteger>(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, T?>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Text, Text> {
+        TableColumn(key, value: path, comparator: NumComparator()) { release in
+            Text(release[keyPath: path]?.localizedNumber() ?? "")
         }
     }
 }
@@ -772,6 +830,16 @@ struct NumericComparator<N: Numeric & Comparable> : SortComparator {
 
     func compare(_ lhs: N, _ rhs: N) -> ComparisonResult {
         lhs < rhs ? reorder(.orderedAscending) : lhs > rhs ? reorder(.orderedDescending) : .orderedSame
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+struct NumComparator<N: Numeric & Comparable> : SortComparator {
+    var order: SortOrder = SortOrder.forward
+
+    func compare(_ lhs: N?, _ rhs: N?) -> ComparisonResult {
+        guard let lhs = lhs, let rhs = rhs else { return .orderedSame }
+        return lhs < rhs ? reorder(.orderedAscending) : lhs > rhs ? reorder(.orderedDescending) : .orderedSame
     }
 }
 
