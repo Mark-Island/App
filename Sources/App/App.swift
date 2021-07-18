@@ -47,7 +47,9 @@ public extension AppScene {
         WindowGroup {
             NavigationRootView()
                 .environmentObject(appEnv)
-                .task(appEnv.windowAppeared)
+                .task {
+                    await appEnv.windowAppeared()
+                }
         }
         .commands {
             SidebarCommands()
