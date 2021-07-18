@@ -40,22 +40,7 @@ public extension AppContainer {
             //TextEditingCommands()
             //TextFormattingCommands()
 
-            CommandMenu("Fair") {
-                Button("Reload") {
-                    let start = CFAbsoluteTimeGetCurrent()
-                    Task {
-                        await appEnv.loadResults(cache: .reloadIgnoringLocalAndRemoteCacheData)
-                        let end = CFAbsoluteTimeGetCurrent()
-                        print("reload:", end - start)
-                    }
-                }
-                .keyboardShortcut("R")
-
-                Button("Find") {
-                    appEnv.activateFind()
-                }
-                .keyboardShortcut("F")
-            }
+            AppFairCommands()
         }
     }
 }
@@ -71,22 +56,70 @@ public struct AppRelease : Hashable, Identifiable {
     public var id: Int64 { rel.id }
 }
 
+/// The current selected instance, which can either be a release or a workflow run
+enum Selection {
+    case app(AppRelease)
+    case run(FairHub.WorkflowRun)
+}
+
 /// The manager for the current app fair
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-open class FairManager: AppEnvironmentObject {
-    @AppStorage("hubHost") open var hubHost = "https://api.github.com"
-    @AppStorage("hubToken") open var hubToken = ""
-    @AppStorage("hubOrg") open var hubOrg = "appfair"
-    @AppStorage("hubRepo") open var hubRepo = "App"
+@MainActor public final class FairManager: AppEnvironmentObject {
+    @AppStorage("hubHost") var hubHost = "https://api.github.com"
+    @AppStorage("hubToken") var hubToken = ""
+    @AppStorage("hubOrg") var hubOrg = "appfair"
+    @AppStorage("hubRepo") var hubRepo = "App"
 
-    @AppStorage("appsTable") open var appsTable = false
+    @Published var errors: [(AppFailure?, Error)] = []
+}
 
-    @Published open var searchText: String = ""
-    @Published open var searchSelected: Bool = false
-    @Published open var errors: [(AppFailure, Error)] = []
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+struct AppFairCommands: Commands {
+    @FocusedBinding(\.selection) private var selection: Selection??
 
-    @Published open var apps: [AppRelease] = []
-    @Published open var runs: [FairHub.WorkflowRun] = []
+    var body: some Commands {
+
+//        CommandMenu("Fair") {
+//            Button("Find") {
+//                appEnv.activateFind()
+//            }
+//            .keyboardShortcut("F")
+//        }
+
+//        CommandGroup(before: .newItem) {
+//            ShareAppButton()
+//        }
+
+        CommandMenu("Fair") {
+            switch selection {
+            case .app(let app):
+                Button("Reload Apps") {
+                    let start = CFAbsoluteTimeGetCurrent()
+                    Task {
+                        //await appEnv.loadResults(cache: .reloadIgnoringLocalAndRemoteCacheData)
+                        let end = CFAbsoluteTimeGetCurrent()
+                        print("reload apps:", end - start)
+                    }
+                }
+                .keyboardShortcut("R")
+            case .run(let run):
+                Button("Reload Runs") {
+                    let start = CFAbsoluteTimeGetCurrent()
+                    Task {
+                        //await appEnv.loadResults(cache: .reloadIgnoringLocalAndRemoteCacheData)
+                        let end = CFAbsoluteTimeGetCurrent()
+                        print("reload runs:", end - start)
+                    }
+                }
+                .keyboardShortcut("R")
+            case .none:
+                EmptyView()
+            case .some(.none):
+                EmptyView()
+            }
+
+        }
+    }
 }
 
 /// The reason why an action failed
@@ -121,12 +154,11 @@ public extension FairManager {
     }
 
     func windowAppeared() async {
-        await loadResults(cache: .useProtocolCachePolicy)
+        //await loadResults(cache: .useProtocolCachePolicy)
     }
 
     func activateFind() {
-        print("### ", #function)
-        self.searchSelected = true
+        print("### ", #function) // TODO: is there a way to focus the search field?
     }
 
     func fetchReleases(cache: URLRequest.CachePolicy? = nil) async throws -> [FairHub.ReleaseInfo] {
@@ -151,21 +183,6 @@ public extension FairManager {
             }
         }
         return rels
-    }
-
-    func loadResults(cache: URLRequest.CachePolicy) async {
-        self.apps = []
-        self.runs = []
-
-        do {
-            /// perform all the fetches simultaneously and aggregate the results
-            async let rels = fetchReleases(cache: cache)
-            async let forks = fetchForks(cache: cache)
-            async let runs = fetchRuns(cache: cache)
-            (self.apps, self.runs) = try await (match(rels, forks), runs.workflow_runs)
-        } catch {
-            errors.append((.reloadFailed, error))
-        }
     }
 
     func share(_ item: Item) {
@@ -352,38 +369,68 @@ public struct NavigationRootView : View {
     @EnvironmentObject var fair: FairManager
 
     public var body: some View {
-        if fair.appsTable {
-            NavigationView {
-                SidebarView()
-                VSplitView {
-                    AppsListView()
-                    WelcomeView()
-                }
-            }
-        } else {
-            NavigationView {
-                SidebarView()
-                AppsListView()
-                WelcomeView()
+        NavigationView {
+            SidebarView()
+            AppsListView()
+            DetailView()
+        }
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+public struct DetailView : View {
+    @FocusedBinding(\.selection) private var selection: Selection??
+
+    public var body: some View {
+        VStack {
+            //WelcomeAnimationView()
+
+            switch selection {
+            case .app(let app):
+                ScrollView { AppInfoView(app: app) }
+            case .run(let run):
+                ScrollView { RunInfoView(run: run) }
+            case .none:
+                Text("No Selection").font(.title)
+            case .some(.none):
+                Text("No Selection").font(.title)
             }
         }
     }
 }
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-public struct WelcomeView : View, Equatable {
-    public var body: some View {
-        VStack {
-            Text(atx: """
-            Welcome to the **App Fair**!
-            """)
-                .font(.title)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+struct AppInfoView : Equatable, View {
+    let app: AppRelease
 
-            Spacer()
-            //WelcomeAnimationView()
-                //.overlay(Rectangle)
+    #warning("Not working")
+    var body : some View {
+        Form {
+            GroupBox("Release") {
+                TextField("Name", text: .constant(app.rel.name))
+            }
+
+            GroupBox("Repository") {
+                TextField("Organization", text: .constant(app.repo.name))
+                TextField("Owner", text: .constant(app.repo.owner.login))
+                TextField("Type", text: .constant(app.repo.owner.type))
+                //TextField("ID", text: .constant(app.repo.owner.id))
+            }
+        }
+        .padding()
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+struct RunInfoView : Equatable, View {
+    let run: FairHub.WorkflowRun
+
+    #warning("Not working")
+    var body : some View {
+        Form {
+            GroupBox("Run") {
+                TextField("Name", text: .constant(run.name))
+            }
         }
     }
 }
@@ -565,12 +612,15 @@ public struct URLImage : View, Equatable {
     public let scale: CGFloat
     /// Whether the image should be resizable or not
     public let resizable: ContentMode?
+    /// Whether a progress placeholder should be used
+    public let showProgress: Bool
 
-    public init(sync: Bool = false, url: URL, scale: CGFloat = 1.0, resizable: ContentMode? = nil) {
+    public init(sync: Bool = false, url: URL, scale: CGFloat = 1.0, resizable: ContentMode? = nil, showProgress: Bool = false) {
         self.sync = sync
         self.url = url
         self.scale = scale
         self.resizable = resizable
+        self.showProgress = showProgress
     }
 
     public var body: some View {
@@ -578,20 +628,27 @@ public struct URLImage : View, Equatable {
             AsyncImage(url: url, scale: scale) { phase in
                 if let image = phase.image {
                     if let resizable = resizable {
-                        image.resizable().aspectRatio(contentMode: resizable)
+                        image
+                            .resizable(resizingMode: .stretch)
+                            .aspectRatio(contentMode: resizable)
                     } else {
                         image
                     }
                 } else if let error = phase.error {
                     Label(error.localizedDescription, systemImage: "xmark.octagon")
+                } else if showProgress == true {
+                    ProgressView().progressViewStyle(.automatic)
+                    //Color.gray.opacity(0.5)
                 } else {
-                    ProgressView()
+                    ProgressView().progressViewStyle(.automatic).hidden()
                 }
             }
         } else { // load the image synchronously
             if let img = UXImage(contentsOf: url) {
                 if let resizable = resizable {
-                    Image(uxImage: img).resizable().aspectRatio(contentMode: resizable)
+                    Image(uxImage: img)
+                        .resizable(resizingMode: .stretch)
+                        .aspectRatio(contentMode: resizable)
                 } else {
                     Image(uxImage: img)
                 }
@@ -602,19 +659,76 @@ public struct URLImage : View, Equatable {
     }
 }
 
+
+extension FocusedValues {
+//    var garden: Binding<Garden>? {
+//        get { self[FocusedGardenKey.self] }
+//        set { self[FocusedGardenKey.self] = newValue }
+//    }
+
+    var selection: Binding<Selection?>? {
+        get { self[FocusedSelection.self] }
+        set { self[FocusedSelection.self] = newValue }
+    }
+
+//    private struct FocusedGardenKey: FocusedValueKey {
+//        typealias Value = Binding<Selection?>
+//    }
+
+    private struct FocusedSelection: FocusedValueKey {
+        typealias Value = Binding<Selection?>
+    }
+}
+//.focusedSceneValue(\.garden, $garden)
+
+
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+struct DisplayModePicker: View {
+    @Binding var mode: AppsListView.ViewMode
+
+    var body: some View {
+        Picker("Display Mode", selection: $mode) {
+            ForEach(AppsListView.ViewMode.allCases) { viewMode in
+                viewMode.label
+            }
+        }
+        .pickerStyle(SegmentedPickerStyle())
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+extension AppsListView.ViewMode {
+    var labelContent: (name: String, systemImage: String) {
+        switch self {
+        case .table:
+            return ("Table", "tablecells")
+        case .gallery:
+            return ("Gallery", "photo")
+        }
+    }
+
+    var label: some View {
+        let content = labelContent
+        return Label(content.name, systemImage: content.systemImage)
+    }
+}
+
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 struct AppsListView: View {
     @EnvironmentObject var fair: FairManager
+    enum ViewMode: String, CaseIterable, Identifiable {
+        var id: Self { self }
+        case table
+        case gallery
+    }
+
+    @SceneStorage("viewMode") private var mode: ViewMode = .table
 
     var item: FairManager.SidebarItem? = nil
 
-    /// Whether to show the view as a table or sidebar
-    var displayAsTable: Bool { fair.appsTable }
-
-
     var body: some View {
         Group {
-            if displayAsTable {
+            if mode == .table {
                 switch item {
                 case .recent:
                     ActionsTableView()
@@ -625,17 +739,11 @@ struct AppsListView: View {
                 ReleasesListView()
             }
         }
-        .searchable(text: $fair.searchText, placement: .automatic) {
-            // SuggestionsView()
-            // Text("Search suggestions…").keyboardShortcut("S")
-        }
-        .onSubmit(of: .search) {
-            fair.submitCurrentSearchQuery()
-        }
+//        .padding()
+//        .focusedSceneValue(\.garden, $garden)
+//        .focusedSceneValue(\.selection, $selection)
         .toolbar {
-            Button(action: { fair.appsTable.toggle() }) {
-                Image(systemName: "line.horizontal.3.decrease.circle")
-            }
+            DisplayModePicker(mode: $mode)
         }
     }
 }
@@ -682,10 +790,10 @@ struct ReleasesListView: View {
                 }
             }
         }
-        .refreshable {
-            await fair.loadResults(cache: .reloadRevalidatingCacheData)
-        }
-        .navigationTitle("Apps")
+//        .refreshable {
+//            await fair.loadResults(cache: .reloadRevalidatingCacheData)
+//        }
+//        .navigationTitle("Apps")
     }
 }
 
@@ -715,52 +823,134 @@ struct ImageDetailsView: View {
 
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-struct ActionsTableView : View, TableColumnFactory {
+struct ActionsTableView : View, TableColumnator {
     typealias TableItemRoot = FairHub.WorkflowRun
     @EnvironmentObject var fair: FairManager
-    @State private var selection: FairHub.WorkflowRun.ID? = nil
-    @State private var sortOrder = [KeyPathComparator(\FairHub.WorkflowRun.created_at)]
+    @State var selection: TableItemRoot.ID? = nil
+    @State private var sortOrder = [KeyPathComparator(\TableItemRoot.created_at)]
+    @State var searchText: String = ""
+    @State var items: [FairHub.WorkflowRun] = []
 
     var body: some View {
-        Table(fair.runs, selection: $selection, sortOrder: $sortOrder) {
-            Group {
-                //strColumn(named: "Name", path: \FairHub.WorkflowRun.name)
-                ostrColumn(named: "Owner", path: \.head_repository?.owner.login)
+        table
+            .task { await fetchRuns() }
+    }
 
-                strColumn(named: "Hash", path: \.head_sha)
-                strColumn(named: "Status", path: \.status)
-                strColumn(named: "Conclusion", path: \.conclusion)
+    func fetchRuns(cache: URLRequest.CachePolicy? = nil) async {
+        do {
+            self.items = try await fair.fetchRuns(cache: cache).workflow_runs
+        } catch {
+            fair.errors.append((nil, error))
+        }
+    }
 
-                numColumn(named: "Run #", path: \.run_number)
-                strColumn(named: "Author", path: \.head_commit.author.name)
-                dateColumn(named: "Created", path: \.created_at)
-                dateColumn(named: "Updates", path: \.updated_at)
+    var table: some View {
+        let imageColumn = TableColumn("", value: \TableItemRoot.head_repository?.owner.avatar_url, comparator: StringComparator()) { item in
+            if let avatar_url = item.head_repository?.owner.avatar_url, let url = URL(string: avatar_url) {
+                URLImage(url: url, resizable: .fit)
             }
+        }
+        .width(50)
+
+        let ownerColumn = ostrColumn(named: "Owner", path: \.head_repository?.owner.login)
+        let statusColumn = ostrColumn(named: "Status", path: \.status?.rawValue)
+        let conclusionColumn = ostrColumn(named: "Conclusion", path: \.conclusion?.rawValue)
+        let runColumn = numColumn(named: "Run #", path: \.run_number)
+        let authorColumn = strColumn(named: "Author", path: \.head_commit.author.name)
+        let createdColumn = dateColumn(named: "Created", path: \.created_at)
+        let updatedColumn = dateColumn(named: "Updated", path: \.updated_at)
+        let hashColumn = TableColumn("Hash", value: \TableItemRoot.head_sha) { item in
+            Text(item.head_sha).font(Font.system(.body, design: .monospaced))
+        }
+
+        return Table(selection: $selection, sortOrder: $sortOrder) {
+            Group {
+                imageColumn
+                ownerColumn
+                statusColumn
+                conclusionColumn
+                runColumn
+                authorColumn
+                createdColumn
+                updatedColumn
+                hashColumn.width(ideal: 350) // about the right length to fit a SHA-1 hash
+            }
+        } rows: {
+            ForEach(search(self.items)) { items in
+                TableRow(items)
+                    //.itemProvider { items.itemProvider }
+            }
+//            .onInsert(of: [Item.draggableType]) { index, providers in
+//                Item.fromItemProviders(providers) { items in
+//                    item.items.insert(contentsOf: items, at: index)
+//                }
+//            }
         }
         .tableStyle(.inset(alternatesRowBackgrounds: true))
         .font(Font.body.monospacedDigit())
         .onChange(of: sortOrder) {
-            fair.runs.sort(using: $0)
+            self.items.sort(using: $0)
         }
+        .focusedSceneValue(\.selection, .constant(itemSelection))
+        .searchable(text: $searchText)
     }
 
+    /// The currently selected item
+    var itemSelection: Selection? {
+        guard let item = items.first(where: { $0.id == selection }) else {
+            return nil
+        }
+
+        return Selection.run(item)
+    }
+
+    private func search(_ items: [TableItemRoot]) -> [TableItemRoot] {
+        searchText.isEmpty ? items
+        : items.filter { item in
+            item.name.localizedCaseInsensitiveContains(searchText) == true
+            || item.status?.rawValue.localizedCaseInsensitiveContains(searchText) == true
+            || item.conclusion?.rawValue.localizedCaseInsensitiveContains(searchText) == true
+            || item.head_commit.author.name.localizedCaseInsensitiveContains(searchText) == true
+            || item.head_sha.contains(searchText) == true
+        }
+    }
 }
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-struct ReleasesTableView : View, TableColumnFactory {
+struct ReleasesTableView : View, TableColumnator {
     typealias TableItemRoot = AppRelease
     @EnvironmentObject var fair: FairManager
-    @State private var selection: AppRelease.ID? = nil
+    @State var selection: AppRelease.ID? = nil
     @State private var sortOrder = [KeyPathComparator(\AppRelease.rel.created_at)]
+    @State var items: [TableItemRoot] = []
+    @State var searchText: String = ""
 
     var body: some View {
-        Table(fair.apps, selection: $selection, sortOrder: $sortOrder) {
+        table
+            .task { await fetchApps() }
+    }
+
+    func fetchApps(cache: URLRequest.CachePolicy? = nil) async {
+        async let rels = fair.fetchReleases(cache: cache)
+        async let forks = fair.fetchForks(cache: cache)
+        do {
+            self.items = try await fair.match(rels, forks)
+        } catch {
+            Task { // otherwise warnings about accessing off of the main thread
+                fair.errors.append((nil, error))
+            }
+        }
+    }
+
+    var table: some View {
+        Table(selection: $selection, sortOrder: $sortOrder) {
             Group {
                 TableColumn("", value: \AppRelease.repo.owner.avatar_url, comparator: StringComparator()) { item in
                     if let avatar_url = item.repo.owner.avatar_url, let url = URL(string: avatar_url) {
                         URLImage(url: url, resizable: .fit)
                     }
                 }
+                .width(50)
             }
 
             Group {
@@ -780,8 +970,8 @@ struct ReleasesTableView : View, TableColumnFactory {
                 ostrColumn(named: "State", path: \.rel.assets.first?.state)
                 onumColumn(named: "Downloads", path: \.rel.assets.first?.download_count)
 
-                TableColumn("Size", value: \AppRelease.rel.assets.first?.size, comparator: OptionalNumericComparator()) { release in
-                    Text(release.rel.assets.first?.size.localizedByteCount(countStyle: .file) ?? "N/A")
+                TableColumn("Size", value: \AppRelease.rel.assets.first?.size, comparator: OptionalNumericComparator()) { item in
+                    Text(item.rel.assets.first?.size.localizedByteCount(countStyle: .file) ?? "N/A")
                 }
             }
 
@@ -791,68 +981,104 @@ struct ReleasesTableView : View, TableColumnFactory {
             }
 
             Group {
-                TableColumn("Download", value: \AppRelease.rel.assets.first?.browser_download_url.lastPathComponent, comparator: StringComparator()) { release in
-                    //Text(release.assets.first?.state ?? "N/A")
-                    //Toggle(isOn: .constant(release.draft)) { EmptyView () }
-                    if let asset = release.rel.assets.first {
+                TableColumn("Download", value: \AppRelease.rel.assets.first?.browser_download_url.lastPathComponent, comparator: StringComparator()) { item in
+                    //Text(item.assets.first?.state ?? "N/A")
+                    //Toggle(isOn: .constant(item.draft)) { EmptyView () }
+                    if let asset = item.rel.assets.first {
                         Link("Download \(asset.size.localizedByteCount(countStyle: .file))", destination: asset.browser_download_url)
                     }
                 }
                 TableColumn("Tag", value: \AppRelease.rel.tag_name)
-                TableColumn("Info", value: \AppRelease.rel.body) { release in
-                    Text((try? release.rel.body.atx()) ?? "No info")
+                TableColumn("Info", value: \AppRelease.rel.body) { item in
+                    Text((try? item.rel.body.atx()) ?? "No info")
                 }
             }
+        } rows: {
+            ForEach(search(self.items)) { items in
+                TableRow(items)
+                    //.itemProvider { items.itemProvider }
+            }
+//            .onInsert(of: [Item.draggableType]) { index, providers in
+//                Item.fromItemProviders(providers) { items in
+//                    item.items.insert(contentsOf: items, at: index)
+//                }
+//            }
         }
         .tableStyle(.inset(alternatesRowBackgrounds: false))
         .font(Font.body.monospacedDigit())
         .onChange(of: sortOrder) {
-            fair.apps.sort(using: $0)
+            self.items.sort(using: $0)
+        }
+        .focusedSceneValue(\.selection, .constant(itemSelection))
+        .searchable(text: $searchText)
+    }
+
+    /// The currently selected item
+    var itemSelection: Selection? {
+        guard let item = items.first(where: { $0.id == selection }) else {
+            return nil
+        }
+
+        return Selection.app(item)
+    }
+
+    private func search(_ items: [TableItemRoot]) -> [TableItemRoot] {
+        searchText.isEmpty ? items
+        : items.filter { item in
+            item.repo.name.localizedCaseInsensitiveContains(searchText) == true
         }
     }
 }
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-protocol TableColumnFactory {
+protocol TableColumnator {
     associatedtype TableItemRoot : Identifiable
+
+    /// The items that this table holds
+    var items: [TableItemRoot] { get nonmutating set }
+
+    /// The current selection, if any
+    var selection: TableItemRoot.ID? { get nonmutating set }
 }
 
+
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-extension TableColumnFactory {
+extension TableColumnator {
+
     func dateColumn(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, Date>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Text, Text> {
-        TableColumn(key, value: path, comparator: DateComparator()) { release in
-            Text(release[keyPath: path].localizedDate(dateStyle: .short, timeStyle: .short))
+        TableColumn(key, value: path, comparator: DateComparator()) { item in
+            Text(item[keyPath: path].localizedDate(dateStyle: .short, timeStyle: .short))
         }
     }
 
     func numColumn<T: BinaryInteger>(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, T>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Text, Text> {
-        TableColumn(key, value: path, comparator: NumericComparator()) { release in
-            Text(release[keyPath: path].localizedNumber())
+        TableColumn(key, value: path, comparator: NumericComparator()) { item in
+            Text(item[keyPath: path].localizedNumber())
         }
     }
 
     func boolColumn(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, Bool>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Toggle<EmptyView>, Text> {
-        TableColumn(key, value: path, comparator: BoolComparator()) { release in
-            Toggle(isOn: .constant(release[keyPath: path])) { EmptyView () }
+        TableColumn(key, value: path, comparator: BoolComparator()) { item in
+            Toggle(isOn: .constant(item[keyPath: path])) { EmptyView () }
         }
     }
 
     /// Non-optional string column
     func strColumn(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, String>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Text, Text> {
-        TableColumn(key, value: path, comparator: .localizedStandard) { release in
-            Text(release[keyPath: path])
+        TableColumn(key, value: path, comparator: .localizedStandard) { item in
+            Text(item[keyPath: path])
         }
     }
 
     func ostrColumn(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, String?>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Text, Text> {
-        TableColumn(key, value: path, comparator: StringComparator()) { release in
-            Text(release[keyPath: path] ?? "")
+        TableColumn(key, value: path, comparator: StringComparator()) { item in
+            Text(item[keyPath: path] ?? "")
         }
     }
 
     func onumColumn<T: BinaryInteger>(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, T?>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Text, Text> {
-        TableColumn(key, value: path, comparator: NumComparator()) { release in
-            Text(release[keyPath: path]?.localizedNumber() ?? "")
+        TableColumn(key, value: path, comparator: NumComparator()) { item in
+            Text(item[keyPath: path]?.localizedNumber() ?? "")
         }
     }
 }
