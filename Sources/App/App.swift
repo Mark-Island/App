@@ -44,7 +44,7 @@ public extension AppContainer {
                 Button("Reload") {
                     let start = CFAbsoluteTimeGetCurrent()
                     Task {
-                        await appEnv.reloadResults()
+                        await appEnv.loadResults(cache: .reloadIgnoringLocalAndRemoteCacheData)
                         let end = CFAbsoluteTimeGetCurrent()
                         print("reload:", end - start)
                     }
@@ -63,6 +63,14 @@ public extension AppContainer {
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 public typealias AppEnv = FairManager
 
+/// A released app
+public struct AppRelease : Hashable, Identifiable {
+    let repo: FairHub.RepositoryInfo
+    let rel: FairHub.ReleaseInfo
+
+    public var id: Int64 { rel.id }
+}
+
 /// The manager for the current app fair
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 open class FairManager: AppEnvironmentObject {
@@ -75,8 +83,20 @@ open class FairManager: AppEnvironmentObject {
 
     @Published open var searchText: String = ""
     @Published open var searchSelected: Bool = false
-    @Published open var errors: [Error] = []
-    @Published open var releases: [FairHub.ReleaseInfo] = []
+    @Published open var errors: [(AppFailure, Error)] = []
+
+    @Published open var apps: [AppRelease] = []
+}
+
+/// The reason why an action failed
+public enum AppFailure {
+    case reloadFailed
+
+    var failureReason: LocalizedStringKey? {
+        switch self {
+        case .reloadFailed: return "Reload Failed"
+        }
+    }
 }
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
@@ -88,11 +108,15 @@ public extension FairManager {
     }
 
     var listReleases: FairHub.ListReleasesRequest {
-        FairHub.ListReleasesRequest(org: hubOrg, repo: hubRepo)
+        .init(org: hubOrg, repo: hubRepo)
+    }
+
+    var listForks: FairHub.GetRepostoryForksRequest {
+        .init(org: hubOrg, repo: hubRepo)
     }
 
     func windowAppeared() async {
-        await reloadResults()
+        await loadResults(cache: .useProtocolCachePolicy)
     }
 
     func activateFind() {
@@ -100,17 +124,35 @@ public extension FairManager {
         self.searchSelected = true
     }
 
-    func fetchReleases() async throws -> [FairHub.ReleaseInfo] {
-        try await hub.requestAsync(listReleases)
+    func fetchReleases(cache: URLRequest.CachePolicy? = nil) async throws -> [FairHub.ReleaseInfo] {
+        try await hub.requestAsync(listReleases, cache: cache)
     }
 
-    func reloadResults() async {
-        self.releases = []
+    func fetchForks(cache: URLRequest.CachePolicy? = nil) async throws -> [FairHub.RepositoryInfo] {
+        try await hub.requestAsync(listForks, cache: cache)
+    }
+
+    /// Matches up the list of releases with the list of forks
+    func match(_ releases: [FairHub.ReleaseInfo], _ forks: [FairHub.RepositoryInfo]) -> [AppRelease] {
+        let fks = Dictionary(grouping: forks, by: \.owner.login)
+        var rels: [AppRelease] = []
+        for release in releases {
+            if let fork = fks[release.tag_name]?.first {
+                rels.append(AppRelease(repo: fork, rel: release))
+            }
+        }
+        return rels
+    }
+
+    func loadResults(cache: URLRequest.CachePolicy) async {
+        self.apps = []
 
         do {
-            self.releases = try await fetchReleases()
+            async let rels = fetchReleases(cache: cache)
+            async let forks = fetchForks(cache: cache)
+            self.apps = try await match(rels, forks)
         } catch {
-            errors.append(error)
+            errors.append((.reloadFailed, error))
         }
     }
 
@@ -281,8 +323,6 @@ public struct NavigationRootView : View {
 public struct WelcomeView : View, Equatable {
     static let welcomeText = Result { try """
         Welcome to the **App Fair**!
-        All are *welcome* here.
-        (The Free & Fair place for all your Apps)
         """.atx() }
 
     public var body: some View {
@@ -291,50 +331,6 @@ public struct WelcomeView : View, Equatable {
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-}
-
-/// The `LSApplicationCategoryType` for an app
-public enum AppCategory : String, CaseIterable, Hashable {
-    case business = "public.app-category.business"
-    case developertools = "public.app-category.developer-tools"
-    case education = "public.app-category.education"
-    case entertainment = "public.app-category.entertainment"
-    case finance = "public.app-category.finance"
-    case games = "public.app-category.games"
-    case actiongames = "public.app-category.action-games"
-    case adventuregames = "public.app-category.adventure-games"
-    case arcadegames = "public.app-category.arcade-games"
-    case boardgames = "public.app-category.board-games"
-    case cardgames = "public.app-category.card-games"
-    case casinogames = "public.app-category.casino-games"
-    case dicegames = "public.app-category.dice-games"
-    case educationalgames = "public.app-category.educational-games"
-    case familygames = "public.app-category.family-games"
-    case kidsgames = "public.app-category.kids-games"
-    case musicgames = "public.app-category.music-games"
-    case puzzlegames = "public.app-category.puzzle-games"
-    case racinggames = "public.app-category.racing-games"
-    case roleplayinggames = "public.app-category.role-playing-games"
-    case simulationgames = "public.app-category.simulation-games"
-    case sportsgames = "public.app-category.sports-games"
-    case strategygames = "public.app-category.strategy-games"
-    case triviagames = "public.app-category.trivia-games"
-    case wordgames = "public.app-category.word-games"
-    case graphicsdesign = "public.app-category.graphics-design"
-    case healthcarefitness = "public.app-category.healthcare-fitness"
-    case lifestyle = "public.app-category.lifestyle"
-    case medical = "public.app-category.medical"
-    case music = "public.app-category.music"
-    case news = "public.app-category.news"
-    case photography = "public.app-category.photography"
-    case productivity = "public.app-category.productivity"
-    case reference = "public.app-category.reference"
-    case socialnetworking = "public.app-category.social-networking"
-    case sports = "public.app-category.sports"
-    case travel = "public.app-category.travel"
-    case utilities = "public.app-category.utilities"
-    case video = "public.app-category.video"
-    case weather = "public.app-category.weather"
 }
 
 public extension AppCategory {
@@ -611,7 +607,7 @@ struct ReleasesListView: View {
             }
         }
         .refreshable {
-            await fair.reloadResults()
+            await fair.loadResults(cache: .reloadRevalidatingCacheData)
         }
         .navigationTitle("Apps")
     }
@@ -644,80 +640,75 @@ struct ImageDetailsView: View {
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 struct ReleasesTableView: View {
     @EnvironmentObject var fair: FairManager
-
-    @State private var selection: FairHub.ReleaseInfo.ID? = nil
-
-    @State private var sortOrder = [KeyPathComparator(\FairHub.ReleaseInfo.created_at)]
-
-
-    //            public var node_id: String
-    //            public var name: String
-    //            public var label: String
-    //            public var url: URL
-    //            public var browser_download_url: URL
-    //            public var uploader: Uploader
-    //            public var content_type: String
-    //            public var state: String // e.g., "uploaded"
-    //            public var size: Int64
-    //            public var download_count: Int64
-    //            public var created_at: Date
-    //            public var updated_at: Date
+    @State private var selection: AppRelease.ID? = nil
+    @State private var sortOrder = [KeyPathComparator(\AppRelease.rel.created_at)]
 
     var body: some View {
-        Table(fair.releases, selection: $selection, sortOrder: $sortOrder) {
+        Table(fair.apps, selection: $selection, sortOrder: $sortOrder) {
             Group {
-                TableColumn("Name", value: \FairHub.ReleaseInfo.name)
+                TableColumn("Name", value: \AppRelease.rel.name)
+                TableColumn("Organization", value: \AppRelease.repo.owner.login)
 
-                TableColumn("Created", value: \FairHub.ReleaseInfo.created_at, comparator: DateComparator()) { release in
-                    Text(release.created_at.localizedDate(dateStyle: .short, timeStyle: .short))
+                TableColumn("Created", value: \AppRelease.rel.created_at, comparator: DateComparator()) { release in
+                    Text(release.rel.created_at.localizedDate(dateStyle: .short, timeStyle: .short))
                 }
-                TableColumn("Published", value: \FairHub.ReleaseInfo.published_at, comparator: DateComparator()) { release in
-                    Text(release.published_at.localizedDate(dateStyle: .short, timeStyle: .short))
+                TableColumn("Published", value: \AppRelease.rel.published_at, comparator: DateComparator()) { release in
+                    Text(release.rel.published_at.localizedDate(dateStyle: .short, timeStyle: .short))
                 }
             }
 
             Group {
-                TableColumn("State", value: \FairHub.ReleaseInfo.assets.first?.state, comparator: StringComparator()) { release in
-                    Text(release.assets.first?.state ?? "N/A")
+                TableColumn("Stars", value: \AppRelease.repo.stargazers_count, comparator: NumericComparator()) { release in
+                    Text(release.repo.stargazers_count.localizedNumber())
                 }
-                TableColumn("Downloads", value: \FairHub.ReleaseInfo.assets.first?.download_count, comparator: NumericComparator()) { release in
-                    Text(release.assets.first?.download_count.localizedNumber() ?? "N/A")
+                TableColumn("Issues", value: \AppRelease.repo.open_issues_count, comparator: NumericComparator()) { release in
+                    Text(release.repo.open_issues_count.localizedNumber())
                 }
-                TableColumn("Size", value: \FairHub.ReleaseInfo.assets.first?.size, comparator: NumericComparator()) { release in
-                    Text(release.assets.first?.size.localizedByteCount(countStyle: .file) ?? "N/A")
-                }
-            }
-
-            Group {
-                TableColumn("Draft", value: \FairHub.ReleaseInfo.draft, comparator: BoolComparator()) { release in
-                    Toggle(isOn: .constant(release.draft)) { EmptyView () }
-                }
-                TableColumn("Pre-Release", value: \FairHub.ReleaseInfo.prerelease.description) { release in
-                    Toggle(isOn: .constant(release.prerelease)) { EmptyView () }
+                TableColumn("Forks", value: \AppRelease.repo.forks, comparator: NumericComparator()) { release in
+                    Text(release.repo.forks.localizedNumber())
                 }
             }
 
             Group {
-                TableColumn("Download", value: \FairHub.ReleaseInfo.assets.first?.browser_download_url.lastPathComponent, comparator: StringComparator()) { release in
+                TableColumn("State", value: \AppRelease.rel.assets.first?.state, comparator: StringComparator()) { release in
+                    Text(release.rel.assets.first?.state ?? "N/A")
+                }
+                TableColumn("Downloads", value: \AppRelease.rel.assets.first?.download_count, comparator: OptionalNumericComparator()) { release in
+                    Text(release.rel.assets.first?.download_count.localizedNumber() ?? "N/A")
+                }
+                TableColumn("Size", value: \AppRelease.rel.assets.first?.size, comparator: OptionalNumericComparator()) { release in
+                    Text(release.rel.assets.first?.size.localizedByteCount(countStyle: .file) ?? "N/A")
+                }
+            }
+
+            Group {
+                TableColumn("Draft", value: \AppRelease.rel.draft, comparator: BoolComparator()) { release in
+                    Toggle(isOn: .constant(release.rel.draft)) { EmptyView () }
+                }
+                TableColumn("Pre-Release", value: \AppRelease.rel.prerelease.description) { release in
+                    Toggle(isOn: .constant(release.rel.prerelease)) { EmptyView () }
+                }
+            }
+
+            Group {
+                TableColumn("Download", value: \AppRelease.rel.assets.first?.browser_download_url.lastPathComponent, comparator: StringComparator()) { release in
                     //Text(release.assets.first?.state ?? "N/A")
                     //Toggle(isOn: .constant(release.draft)) { EmptyView () }
-                    if let asset = release.assets.first {
+                    if let asset = release.rel.assets.first {
                         Link("Download \(asset.size.localizedByteCount(countStyle: .file))", destination: asset.browser_download_url)
                     }
                 }
-                TableColumn("Tag", value: \FairHub.ReleaseInfo.tag_name)
-                TableColumn("Info", value: \FairHub.ReleaseInfo.body) { release in
-                    Text((try? release.body.atx()) ?? "No info")
+                TableColumn("Tag", value: \AppRelease.rel.tag_name)
+                TableColumn("Info", value: \AppRelease.rel.body) { release in
+                    Text((try? release.rel.body.atx()) ?? "No info")
                 }
             }
         }
         .onChange(of: sortOrder) {
-            fair.releases.sort(using: $0)
+            fair.apps.sort(using: $0)
         }
     }
-
 }
-
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 extension SortComparator {
@@ -757,7 +748,6 @@ struct DateComparator : SortComparator {
     }
 }
 
-
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 struct StringComparator : SortComparator {
     var order: SortOrder = SortOrder.forward
@@ -771,8 +761,16 @@ struct StringComparator : SortComparator {
 struct NumericComparator : SortComparator {
     var order: SortOrder = SortOrder.forward
 
+    func compare(_ lhs: Int, _ rhs: Int) -> ComparisonResult {
+        lhs < rhs ? reorder(.orderedAscending) : lhs > rhs ? reorder(.orderedDescending) : .orderedSame
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+struct OptionalNumericComparator : SortComparator {
+    var order: SortOrder = SortOrder.forward
+
     func compare(_ lhs: Int64?, _ rhs: Int64?) -> ComparisonResult {
         lhs ?? 0 < rhs ?? 0 ? reorder(.orderedAscending) : lhs ?? 0 > rhs ?? 0 ? reorder(.orderedDescending) : .orderedSame
     }
 }
-
