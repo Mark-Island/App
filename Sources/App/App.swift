@@ -103,6 +103,7 @@ open class FairManager: AppEnvironmentObject {
     @Published open var errors: [(AppFailure, Error)] = []
 
     @Published open var apps: [AppRelease] = []
+    @Published open var runs: [FairHub.WorkflowRun] = []
 }
 
 /// The reason why an action failed
@@ -132,6 +133,10 @@ public extension FairManager {
         .init(org: hubOrg, repo: hubRepo)
     }
 
+    var listRuns: FairHub.ListWorkflowRunsRequest {
+        .init(org: hubOrg, repo: hubRepo)
+    }
+
     func windowAppeared() async {
         await loadResults(cache: .useProtocolCachePolicy)
     }
@@ -149,6 +154,10 @@ public extension FairManager {
         try await hub.requestAsync(listForks, cache: cache)
     }
 
+    func fetchRuns(cache: URLRequest.CachePolicy? = nil) async throws -> FairHub.ListWorkflowRunsRequest.Response {
+        try await hub.requestAsync(listRuns, cache: cache)
+    }
+
     /// Matches up the list of releases with the list of forks
     func match(_ releases: [FairHub.ReleaseInfo], _ forks: [FairHub.RepositoryInfo]) -> [AppRelease] {
         let fks = Dictionary(grouping: forks, by: \.owner.login)
@@ -163,11 +172,14 @@ public extension FairManager {
 
     func loadResults(cache: URLRequest.CachePolicy) async {
         self.apps = []
+        self.runs = []
 
         do {
+            /// perform all the fetches simultaneously and aggregate the results
             async let rels = fetchReleases(cache: cache)
             async let forks = fetchForks(cache: cache)
-            self.apps = try await match(rels, forks)
+            async let runs = fetchRuns(cache: cache)
+            (self.apps, self.runs) = try await (match(rels, forks), runs.workflow_runs)
         } catch {
             errors.append((.reloadFailed, error))
         }
@@ -239,7 +251,7 @@ public extension FairManager {
             case .recent:
                 return Label("Recent", systemImage: "flag") // clock or bolt?
             case .category(let grouping):
-                return Label(grouping.localizedTitle, systemImage: grouping.systemImageName)
+                return grouping.label
             case .search(let term):
                 return Label("Search: \(term)", systemImage: "magnifyingglass")
             }
@@ -346,32 +358,39 @@ public struct NavigationRootView : View {
     @EnvironmentObject var fair: FairManager
 
     public var body: some View {
-        NavigationView {
-            SidebarView()
-            AppsListView()
-            WelcomeView()
+        if fair.appsTable {
+            NavigationView {
+                SidebarView()
+                VSplitView {
+                    AppsListView()
+                    WelcomeView()
+                }
+            }
+        } else {
+            NavigationView {
+                SidebarView()
+                AppsListView()
+                WelcomeView()
+            }
         }
-         .searchable(text: $fair.searchText, placement: .automatic) {
-             // SuggestionsView()
-             // Text("Search suggestions…").keyboardShortcut("S")
-         }
-         .onSubmit(of: .search) {
-             fair.submitCurrentSearchQuery()
-         }
     }
 }
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 public struct WelcomeView : View, Equatable {
-    static let welcomeText = Result { try """
-        Welcome to the **App Fair**!
-        """.atx() }
-
     public var body: some View {
-        Text((try? Self.welcomeText.get()) ?? .init("ERROR"))
-            .font(.title)
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        VStack {
+            Text(atx: """
+            Welcome to the **App Fair**!
+            """)
+                .font(.title)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            Spacer()
+            //WelcomeAnimationView()
+                //.overlay(Rectangle)
+        }
     }
 }
 
@@ -382,33 +401,23 @@ public extension AppCategory {
         case research
         case game
         case entertain
-        case work
         case live
+        case work
 
         /// All the categories that belong to this grouping
         public var categories: [AppCategory] {
             AppCategory.allCases.filter({ $0.groupings.contains(self) })
         }
 
-        public var localizedTitle: LocalizedStringKey {
+        public var label: Label<Text, Image> {
             switch self {
-            case .create: return "Create"
-            case .research: return "Learn"
-            case .game: return "Game"
-            case .entertain: return "Watch"
-            case .work: return "Work"
-            case .live: return "Live"
-            }
-        }
-
-        var systemImageName: String {
-            switch self {
-            case .create: return "paintpalette"
-            case .research: return "bolt"
-            case .game: return "circle.hexagongrid"
-            case .entertain: return "sparkles.tv"
-            case .work: return "briefcase"
-            case .live: return "bed.double"
+            case .create: return Label("Create", image: "custom.paintpalette.fill")
+            //case .create: return Label("Create", systemImage: "paintpalette")
+            case .research: return Label("Read", systemImage: "bolt")
+            case .game: return Label("Play", systemImage: "circle.hexagongrid")
+            case .entertain: return Label("Watch", systemImage: "sparkles.tv")
+            case .live: return Label("Live", systemImage: "house")
+            case .work: return Label("Work", systemImage: "briefcase")
             }
         }
     }
@@ -522,7 +531,7 @@ struct SidebarView: View {
     }
 
     func item(_ item: FairManager.SidebarItem) -> some View {
-        NavigationLink(destination: AppsListView()) {
+        NavigationLink(destination: AppsListView(item: item)) {
             item.label
                 .badge(fair.badgeCount(for: item))
                 //.font(.title3)
@@ -552,32 +561,48 @@ extension URL {
     }
 }
 
-/// An image that loads asynchronously
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+/// An image that loads from a URL, either synchronously or asynchronously
 public struct URLImage : View, Equatable {
+    /// Whether the image should be loaded synchronously or asynchronously
+    public let sync: Bool
+    /// The URL from which to load
     public let url: URL
+    /// The scale of the image
     public let scale: CGFloat
+    /// Whether the image should be resizable or not
     public let resizable: ContentMode?
 
-
-    public init(url: URL, scale: CGFloat = 1.0, resizable: ContentMode? = nil) {
+    public init(sync: Bool = false, url: URL, scale: CGFloat = 1.0, resizable: ContentMode? = nil) {
+        self.sync = sync
         self.url = url
         self.scale = scale
         self.resizable = resizable
     }
 
     public var body: some View {
-        AsyncImage(url: url, scale: scale) { phase in
-            if let image = phase.image {
-                if let resizable = resizable {
-                    image.resizable().aspectRatio(contentMode: resizable)
+        if sync == false, #available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *) {
+            AsyncImage(url: url, scale: scale) { phase in
+                if let image = phase.image {
+                    if let resizable = resizable {
+                        image.resizable().aspectRatio(contentMode: resizable)
+                    } else {
+                        image
+                    }
+                } else if let error = phase.error {
+                    Label(error.localizedDescription, systemImage: "xmark.octagon")
                 } else {
-                    image
+                    ProgressView()
                 }
-            } else if let error = phase.error {
-                Label(error.localizedDescription, systemImage: "xmark.octagon")
+            }
+        } else { // load the image synchronously
+            if let img = UXImage(contentsOf: url) {
+                if let resizable = resizable {
+                    Image(uxImage: img).resizable().aspectRatio(contentMode: resizable)
+                } else {
+                    Image(uxImage: img)
+                }
             } else {
-                ProgressView()
+                Label("Error Loading Image", systemImage: "xmark.octagon")
             }
         }
     }
@@ -587,16 +612,31 @@ public struct URLImage : View, Equatable {
 struct AppsListView: View {
     @EnvironmentObject var fair: FairManager
 
+    var item: FairManager.SidebarItem? = nil
+
     /// Whether to show the view as a table or sidebar
     var displayAsTable: Bool { fair.appsTable }
+
 
     var body: some View {
         Group {
             if displayAsTable {
-                ReleasesTableView()
+                switch item {
+                case .recent:
+                    ActionsTableView()
+                default:
+                    ReleasesTableView()
+                }
             } else {
                 ReleasesListView()
             }
+        }
+        .searchable(text: $fair.searchText, placement: .automatic) {
+            // SuggestionsView()
+            // Text("Search suggestions…").keyboardShortcut("S")
+        }
+        .onSubmit(of: .search) {
+            fair.submitCurrentSearchQuery()
         }
         .toolbar {
             Button(action: { fair.appsTable.toggle() }) {
@@ -681,7 +721,39 @@ struct ImageDetailsView: View {
 
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-struct ReleasesTableView: View, TableColumnFactory {
+struct ActionsTableView : View, TableColumnFactory {
+    typealias TableItemRoot = FairHub.WorkflowRun
+    @EnvironmentObject var fair: FairManager
+    @State private var selection: FairHub.WorkflowRun.ID? = nil
+    @State private var sortOrder = [KeyPathComparator(\FairHub.WorkflowRun.created_at)]
+
+    var body: some View {
+        Table(fair.runs, selection: $selection, sortOrder: $sortOrder) {
+            Group {
+                //strColumn(named: "Name", path: \FairHub.WorkflowRun.name)
+                ostrColumn(named: "Owner", path: \.head_repository?.owner.login)
+
+                strColumn(named: "Hash", path: \.head_sha)
+                strColumn(named: "Status", path: \.status)
+                strColumn(named: "Conclusion", path: \.conclusion)
+
+                numColumn(named: "Run #", path: \.run_number)
+                strColumn(named: "Author", path: \.head_commit.author.name)
+                dateColumn(named: "Created", path: \.created_at)
+                dateColumn(named: "Updates", path: \.updated_at)
+            }
+        }
+        .tableStyle(.inset(alternatesRowBackgrounds: true))
+        .font(Font.body.monospacedDigit())
+        .onChange(of: sortOrder) {
+            fair.runs.sort(using: $0)
+        }
+    }
+
+}
+
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+struct ReleasesTableView : View, TableColumnFactory {
     typealias TableItemRoot = AppRelease
     @EnvironmentObject var fair: FairManager
     @State private var selection: AppRelease.ID? = nil
@@ -690,22 +762,29 @@ struct ReleasesTableView: View, TableColumnFactory {
     var body: some View {
         Table(fair.apps, selection: $selection, sortOrder: $sortOrder) {
             Group {
-                TableColumn("Name", value: \AppRelease.rel.name)
-                TableColumn("Organization", value: \AppRelease.repo.owner.login)
+                TableColumn("", value: \AppRelease.repo.owner.avatar_url, comparator: StringComparator()) { item in
+                    if let avatar_url = item.repo.owner.avatar_url, let url = URL(string: avatar_url) {
+                        URLImage(url: url, resizable: .fit)
+                    }
+                }
+            }
 
+            Group {
+                strColumn(named: "Organization", path: \.repo.owner.login)
+                strColumn(named: "Name", path: \.rel.name)
                 dateColumn(named: "Created", path: \.rel.created_at)
                 dateColumn(named: "Published", path: \.rel.published_at)
             }
 
             Group {
-                numericColumn(named: "Stars", path: \.repo.stargazers_count)
-                numericColumn(named: "Issues", path: \.repo.open_issues_count)
-                numericColumn(named: "Forks", path: \.repo.forks)
+                numColumn(named: "Stars", path: \.repo.stargazers_count)
+                numColumn(named: "Issues", path: \.repo.open_issues_count)
+                numColumn(named: "Forks", path: \.repo.forks)
             }
 
             Group {
-                strColumn(named: "State", path: \.rel.assets.first?.state)
-                numColumn(named: "Downloads", path: \.rel.assets.first?.download_count)
+                ostrColumn(named: "State", path: \.rel.assets.first?.state)
+                onumColumn(named: "Downloads", path: \.rel.assets.first?.download_count)
 
                 TableColumn("Size", value: \AppRelease.rel.assets.first?.size, comparator: OptionalNumericComparator()) { release in
                     Text(release.rel.assets.first?.size.localizedByteCount(countStyle: .file) ?? "N/A")
@@ -752,7 +831,7 @@ extension TableColumnFactory {
         }
     }
 
-    func numericColumn<T: BinaryInteger>(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, T>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Text, Text> {
+    func numColumn<T: BinaryInteger>(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, T>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Text, Text> {
         TableColumn(key, value: path, comparator: NumericComparator()) { release in
             Text(release[keyPath: path].localizedNumber())
         }
@@ -764,13 +843,20 @@ extension TableColumnFactory {
         }
     }
 
-    func strColumn(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, String?>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Text, Text> {
+    /// Non-optional string column
+    func strColumn(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, String>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Text, Text> {
+        TableColumn(key, value: path, comparator: .localizedStandard) { release in
+            Text(release[keyPath: path])
+        }
+    }
+
+    func ostrColumn(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, String?>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Text, Text> {
         TableColumn(key, value: path, comparator: StringComparator()) { release in
             Text(release[keyPath: path] ?? "")
         }
     }
 
-    func numColumn<T: BinaryInteger>(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, T?>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Text, Text> {
+    func onumColumn<T: BinaryInteger>(named key: LocalizedStringKey, path: KeyPath<TableItemRoot, T?>) -> TableColumn<TableItemRoot, KeyPathComparator<TableItemRoot>, Text, Text> {
         TableColumn(key, value: path, comparator: NumComparator()) { release in
             Text(release[keyPath: path]?.localizedNumber() ?? "")
         }
