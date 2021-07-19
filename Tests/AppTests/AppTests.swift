@@ -17,7 +17,7 @@ import XCTest
 @testable import App
 
 final class AppTests: XCTestCase {
-    func testToolArgs() throws {
+    func testAppScene() throws {
         let _ = AppScene()
     }
 }

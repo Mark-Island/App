@@ -15,45 +15,37 @@
 import FairApp
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-@main public struct AppScene : FairApp.FairScene {
+@main public struct AppContainer : FairApp.FairContainer {
     @ObservedObject public var appEnv = AppEnv()
-    public var settings : some View {
-        AppSettingsView()
-            .environmentObject(appEnv)
-    }
-
     public init() { }
-    public static func main() throws { try Self.launch() }
-}
-
-public extension Bundle {
-    /// The URL for the App's resource bundle
-    static var appBundleURL: URL! {
-        Bundle.module.url(forResource: "Bundle", withExtension: nil)
-    }
+    public static func main() throws { try launch() }
 }
 
 // Everything above this line must remain unmodified.
 
-// Code your app in the AppScene and ContentView below.
-
-/// The manager for the current app fair
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-open class AppEnv: AppEnvironmentObject {
-    @AppStorage("someToggle") open var someToggle = false
-    @Published open var searchText: String = ""
-}
-
+// Define your app in an extension of `AppContainer`
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-public extension AppScene {
-    /// The body of your scene must exist in an extension of `AppScene`
-    var body: some Scene {
+public extension AppContainer {
+    /// The body of your scene is provided by `AppContainer.scene`
+    @SceneBuilder var rootScene: some SwiftUI.Scene {
         WindowGroup {
             ContentView()
         }
     }
+
+    /// The app-wide settings view
+    @ViewBuilder var settingsView : some SwiftUI.View {
+        AppSettingsView().environmentObject(appEnv)
+    }
 }
+
+/// The shared app environment
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@MainActor public final class AppEnv: AppEnvironmentObject {
+    @AppStorage("someToggle") public var someToggle = false
+}
+
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 public struct ContentView: View {
