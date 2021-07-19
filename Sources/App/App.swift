@@ -516,9 +516,9 @@ public extension AppCategory {
             case .communicate:
                 return TintedLabel(title: "Communication", systemName: "envelope", tint: Color.pink)
             case .entertain:
-                return TintedLabel(title: "Entertainment", systemName: "sparkles.tv", tint: Color.indigo)
+                return TintedLabel(title: "Entertainment", systemName: "sparkles.tv", tint: Color.teal)
             case .live:
-                return TintedLabel(title: "Lifestyle & Health", systemName: "house", tint: Color.teal)
+                return TintedLabel(title: "Lifestyle & Health", systemName: "house", tint: Color.mint)
             case .game:
                 return TintedLabel(title: "Diversion", systemName: "circle.hexagongrid", tint: Color.yellow)
             case .work:
