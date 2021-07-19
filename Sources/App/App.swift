@@ -740,7 +740,6 @@ struct AppsListView: View {
             }
         }
 //        .padding()
-//        .focusedSceneValue(\.garden, $garden)
 //        .focusedSceneValue(\.selection, $selection)
         .toolbar {
             DisplayModePicker(mode: $mode)
@@ -878,6 +877,7 @@ struct ActionsTableView : View, TableColumnator {
         } rows: {
             ForEach(search(self.items)) { items in
                 TableRow(items)
+                    .font(Font.body.monospacedDigit())
                     //.itemProvider { items.itemProvider }
             }
 //            .onInsert(of: [Item.draggableType]) { index, providers in
@@ -887,7 +887,6 @@ struct ActionsTableView : View, TableColumnator {
 //            }
         }
         .tableStyle(.inset(alternatesRowBackgrounds: true))
-        .font(Font.body.monospacedDigit())
         .onChange(of: sortOrder) {
             self.items.sort(using: $0)
         }
@@ -996,6 +995,7 @@ struct ReleasesTableView : View, TableColumnator {
         } rows: {
             ForEach(search(self.items)) { items in
                 TableRow(items)
+                    .font(Font.body.monospacedDigit())
                     //.itemProvider { items.itemProvider }
             }
 //            .onInsert(of: [Item.draggableType]) { index, providers in
@@ -1005,7 +1005,6 @@ struct ReleasesTableView : View, TableColumnator {
 //            }
         }
         .tableStyle(.inset(alternatesRowBackgrounds: false))
-        .font(Font.body.monospacedDigit())
         .onChange(of: sortOrder) {
             self.items.sort(using: $0)
         }
