@@ -268,18 +268,18 @@ public extension AppEnv {
             }
         }
 
-        var label: some View {
+        var label: TintedLabel {
             switch self {
             case .popular:
-                return Label("Popular", systemImage: "star")
+                return TintedLabel(title: "Popular", systemName: "star", tint: Color.yellow)
             case .favorites:
-                return Label("Favorites", systemImage: "pin")
+                return TintedLabel(title: "Favorites", systemName: "pin", tint: Color.red)
             case .recent:
-                return Label("Recent", systemImage: "flag") // clock or bolt?
+                return TintedLabel(title: "Recent", systemName: "flag", tint: Color.purple) // clock or bolt?
             case .category(let grouping):
                 return grouping.label
             case .search(let term):
-                return Label("Search: \(term)", systemImage: "magnifyingglass")
+                return TintedLabel(title: "Search: \(term)", systemName: "magnifyingglass", tint: Color.gray)
             }
         }
     }
@@ -385,7 +385,7 @@ public struct NavigationRootView : View {
 
     public var body: some View {
         NavigationView {
-            SidebarView()
+            SidebarView().frame(minWidth: 160) // .controlSize(.large)
             AppsListView()
             DetailView()
         }
@@ -448,14 +448,48 @@ struct RunInfoView : Equatable, View {
     }
 }
 
+/// A label that tints its image
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+public struct TintedLabel : View {
+    public let title: LocalizedStringKey
+    public let systemName: StaticString
+    public let tint: Color
+
+    public var body: some View {
+        Label(title: { Text(title) }) {
+//            Image(systemName: systemName.description)
+//                .symbolVariant(.circle)
+//                .symbolVariant(.fill)
+//                .symbolVariant(.none)
+//                .foregroundStyle(tint)
+////                .foregroundStyle(.red, .white, .blue)
+////                .listItemTint(ListItemTint.fixed(tint))
+
+            Image(systemName: systemName.description)
+                //.symbolRenderingMode(.palette)
+                .symbolRenderingMode(.multicolor)
+                //.symbolVariant(.circle)
+                //.symbolVariant(.fill)
+                .foregroundStyle(
+                    .linearGradient(colors: [tint, .white], startPoint: .top, endPoint: .bottomTrailing),
+                    .linearGradient(colors: [.green, .black], startPoint: .top, endPoint: .bottomTrailing),
+                    .linearGradient(colors: [.blue, .black], startPoint: .top, endPoint: .bottomTrailing)
+                )
+                //.font(.title)
+
+        }
+    }
+}
+
 public extension AppCategory {
     /// The grouping for an app category
     enum Grouping : String, CaseIterable, Hashable {
         case create
         case research
-        case game
+        case communicate
         case entertain
         case live
+        case game
         case work
 
         /// All the categories that belong to this grouping
@@ -463,15 +497,23 @@ public extension AppCategory {
             AppCategory.allCases.filter({ $0.groupings.contains(self) })
         }
 
-        public var label: Label<Text, Image> {
+        @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+        public var label: TintedLabel {
             switch self {
-            case .create: return Label("Create", image: "custom.paintpalette.fill")
-            //case .create: return Label("Create", systemImage: "paintpalette")
-            case .research: return Label("Read", systemImage: "bolt")
-            case .game: return Label("Play", systemImage: "circle.hexagongrid")
-            case .entertain: return Label("Watch", systemImage: "sparkles.tv")
-            case .live: return Label("Live", systemImage: "house")
-            case .work: return Label("Work", systemImage: "briefcase")
+            case .create:
+                return TintedLabel(title: "Arts & Crafts", systemName: "paintpalette", tint: Color.cyan)
+            case .research:
+                return TintedLabel(title: "Knowledge", systemName: "book", tint: Color.green)
+            case .communicate:
+                return TintedLabel(title: "Communication", systemName: "envelope", tint: Color.pink)
+            case .entertain:
+                return TintedLabel(title: "Entertainment", systemName: "sparkles.tv", tint: Color.indigo)
+            case .live:
+                return TintedLabel(title: "Lifestyle & Health", systemName: "house", tint: Color.teal)
+            case .game:
+                return TintedLabel(title: "Diversion", systemName: "circle.hexagongrid", tint: Color.yellow)
+            case .work:
+                return TintedLabel(title: "Work", systemName: "briefcase", tint: Color.brown)
             }
         }
     }
@@ -493,10 +535,11 @@ public extension AppCategory {
         case .reference: return [.research]
         case .news: return [.research]
 
+        case .socialnetworking: return [.communicate]
+
         case .healthcarefitness: return [.live]
         case .lifestyle: return [.live]
         case .medical: return [.live]
-        case .socialnetworking: return [.live]
         case .travel: return [.live]
 
         case .sports: return [.entertain]
@@ -568,7 +611,7 @@ struct SidebarView: View {
         .symbolVariant(.fill)
         .symbolRenderingMode(.multicolor)
         .listStyle(.automatic)
-        .toolbar {
+        .toolbar(id: "SidebarView") {
             tool(.popular)
             tool(.favorites)
             tool(.recent)
@@ -578,10 +621,6 @@ struct SidebarView: View {
             tool(.category(.game))
             tool(.category(.live))
             tool(.category(.work))
-
-//            ForEach(AppCategory.Grouping.allCases, id: \.self) { grouping in
-//                tool(grouping)
-//            }
         }
     }
 
@@ -589,12 +628,11 @@ struct SidebarView: View {
         NavigationLink(destination: AppsListView(item: item)) {
             item.label
                 .badge(appEnv.badgeCount(for: item))
-                //.font(.title3)
         }
     }
 
-    func tool(_ item: AppEnv.SidebarItem) -> some ToolbarContent {
-        ToolbarItem(id: item.id, placement: .navigation, showsByDefault: false) {
+    func tool(_ item: AppEnv.SidebarItem) -> some CustomizableToolbarContent {
+        ToolbarItem(id: item.id, placement: .automatic, showsByDefault: false) {
             Button(action: {
                 selectItem(item)
             }, label: {
@@ -723,18 +761,17 @@ struct DisplayModePicker: View {
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 extension AppsListView.ViewMode {
-    var labelContent: (name: String, systemImage: String) {
+    var labelContent: (name: LocalizedStringKey, systemImage: String) {
         switch self {
         case .table:
             return ("Table", "tablecells")
         case .gallery:
-            return ("Gallery", "photo")
+            return ("Gallery", "square.grid.3x2.fill")
         }
     }
 
     var label: some View {
-        let content = labelContent
-        return Label(content.name, systemImage: content.systemImage)
+        Label(labelContent.name, systemImage: labelContent.systemImage)
     }
 }
 
@@ -743,6 +780,7 @@ struct AppsListView: View {
     @EnvironmentObject var appEnv: AppEnv
     @SceneStorage("viewMode") private var mode: ViewMode = .table
 
+    /// Whether to display the items as a table or gallery
     enum ViewMode: String, CaseIterable, Identifiable {
         var id: Self { self }
         case table
@@ -761,22 +799,23 @@ struct AppsListView: View {
                     ReleasesTableView()
                 }
             } else {
-                ReleasesListView()
+                SampleImagesListView()
             }
         }
 //        .padding()
 //        .focusedSceneValue(\.selection, $selection)
-        .toolbar(id: "AppsListView") {
-            ToolbarItem(id: "DisplayModePicker", placement: .navigation, showsByDefault: true) {
+        .toolbar {
+            ToolbarItem(id: "DisplayModePicker", placement: .automatic, showsByDefault: true) {
                 DisplayModePicker(mode: $mode)
             }
         }
+        .navigationTitle(item?.label.title ?? "Apps")
     }
 }
 
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-struct ReleasesListView: View {
+struct SampleImagesListView: View {
     /// TODO: also try https://unsplash.com
     @State var allImageURLs = (1000...1100).compactMap({ URL(string: "https://picsum.photos/id/\($0)") })
     @EnvironmentObject var appEnv: AppEnv
@@ -851,11 +890,11 @@ struct ImageDetailsView: View {
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 struct ActionsTableView : View, ItemTableView {
     @EnvironmentObject var appEnv: AppEnv
-    typealias TableElement = FairHub.WorkflowRun
-    @State var selection: TableElement.ID? = nil
-    @State var sortOrder = [KeyPathComparator(\TableElement.created_at)]
+    typealias TableRowValue = FairHub.WorkflowRun
+    @State var selection: TableRowValue.ID? = nil
+    @State var sortOrder = [KeyPathComparator(\TableRowValue.created_at)]
     @State var searchText: String = ""
-    @State var items: [TableElement] = []
+    @State var items: [TableRowValue] = []
 
     var body: some View {
         table
@@ -871,15 +910,10 @@ struct ActionsTableView : View, ItemTableView {
         }
     }
 
-//    var columns: some TableColumnContent {
-//        let ownerColumn = ostrColumn(named: "Owner", path: \.head_repository?.owner.login)
-//        return Group {
-//            ownerColumn
-//        }
-//    }
+    //var tableColumnBody: some TableColumnContent {
+    var tableColumnBody: Group<TupleTableColumnContent<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, (TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, URLImage?, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>)>> {
 
-    var table: some View {
-        let imageColumn = TableColumn("", value: \TableElement.head_repository?.owner.avatar_url, comparator: StringComparator()) { item in
+        let imageColumn = TableColumn("", value: \TableRowValue.head_repository?.owner.avatar_url, comparator: StringComparator()) { item in
             if let avatar_url = item.head_repository?.owner.avatar_url, let url = URL(string: avatar_url) {
                 URLImage(url: url, resizable: .fit)
             }
@@ -892,11 +926,11 @@ struct ActionsTableView : View, ItemTableView {
         let authorColumn = strColumn(named: "Author", path: \.head_commit.author.name)
         let createdColumn = dateColumn(named: "Created", path: \.created_at)
         let updatedColumn = dateColumn(named: "Updated", path: \.updated_at)
-        let hashColumn = TableColumn("Hash", value: \TableElement.head_sha) { item in
+        let hashColumn = TableColumn("Hash", value: \TableRowValue.head_sha) { item in
             Text(item.head_sha).font(Font.system(.body, design: .monospaced))
         }
 
-        let columns = Group {
+        let tableColumnBody = Group {
             imageColumn.width(50)
             ownerColumn
             statusColumn
@@ -908,27 +942,30 @@ struct ActionsTableView : View, ItemTableView {
             hashColumn.width(ideal: 350) // about the right length to fit a SHA-1 hash
         }
 
-        return Table(selection: $selection, sortOrder: $sortOrder, columns: { columns }, rows: {
-            ForEach(search(self.items)) { item in
-                TableRow(item)
-                    //.itemProvider { items.itemProvider }
-            }
-//            .onInsert(of: [Item.draggableType]) { index, providers in
-//                Item.fromItemProviders(providers) { items in
-//                    item.items.insert(contentsOf: items, at: index)
-//                }
-//            }
-        })
-        .tableStyle(.inset(alternatesRowBackgrounds: true))
-        .font(Font.body.monospacedDigit())
-        .onChange(of: sortOrder) {
-            self.items.sort(using: $0)
+        return tableColumnBody
+    }
+
+    var tableRowBody: some TableRowContent {
+        ForEach(filterRows(self.items)) { item in
+            TableRow(item)
+                //.itemProvider { items.itemProvider }
         }
-        .focusedSceneValue(\.selection, .constant(itemSelection))
-        .focusedSceneValue(\.reloadCommand, .constant({
-            await fetchRuns(cache: .reloadIgnoringLocalAndRemoteCacheData)
-        }))
-        .searchable(text: $searchText)
+    }
+
+    var tableView: Table<TableRowValue, Self, Self> {
+        Table(selection: Binding(get: { selection }, set: { selection = $0 }), sortOrder: Binding(get: { sortOrder }, set: { sortOrder = $0 }), columns: { self }, rows: { self })
+    }
+
+    var table: some View {
+        tableView
+            .tableStyle(.inset(alternatesRowBackgrounds: true))
+            .font(Font.body.monospacedDigit())
+            .onChange(of: sortOrder) {
+                self.items.sort(using: $0)
+            }
+            .focusedSceneValue(\.selection, .constant(itemSelection))
+            .focusedSceneValue(\.reloadCommand, .constant({ await fetchRuns(cache: .reloadIgnoringLocalAndRemoteCacheData) }))
+            .searchable(text: $searchText)
     }
 
     /// The currently selected item
@@ -940,7 +977,7 @@ struct ActionsTableView : View, ItemTableView {
         return Selection.run(item)
     }
 
-    private func search(_ items: [TableElement]) -> [TableElement] {
+    func filterRows(_ items: [TableRowValue]) -> [TableRowValue] {
         searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? items
         : items.filter { item in
             item.name.localizedCaseInsensitiveContains(searchText) == true
@@ -951,15 +988,16 @@ struct ActionsTableView : View, ItemTableView {
         }
     }
 }
+///opt/src/github/appfair/App-Fair/SwiftUI.TableColumnContent:6:24: Candidate has non-matching type '<Self> (content: _GraphValue<Self>, inputs: _TableColumnInputs) -> _TableColumnOutputs' [with TableColumnSortComparator = KeyPathComparator<ActionsTableView.TableRowValue>, TableColumnBody = some TableColumnContent]
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 struct ReleasesTableView : View, ItemTableView {
     @EnvironmentObject var appEnv: AppEnv
-    typealias TableElement = AppRelease
-    @State var selection: TableElement.ID? = nil
-    @State var sortOrder = [KeyPathComparator(\TableElement.release.published_at)]
+    typealias TableRowValue = AppRelease
+    @State var selection: TableRowValue.ID? = nil
+    @State var sortOrder = [KeyPathComparator(\TableRowValue.release.published_at)]
     @State var searchText: String = ""
-    @State var items: [TableElement] = []
+    @State var items: [TableRowValue] = []
 
     var body: some View {
         table
@@ -979,8 +1017,9 @@ struct ReleasesTableView : View, ItemTableView {
         }
     }
 
-    var table: some View {
-        let imageColumn: TableColumn<TableElement, KeyPathComparator<TableElement>, URLImage?, Text> = TableColumn("", value: \TableElement.repository.owner.avatar_url, comparator: StringComparator()) { item in
+    //var tableColumnBody: some TableColumnContent {
+    var tableColumnBody: Group<TupleTableColumnContent<AppRelease, KeyPathComparator<AppRelease>, (Group<TupleTableColumnContent<AppRelease, KeyPathComparator<AppRelease>, (TableColumn<AppRelease, KeyPathComparator<AppRelease>, Optional<URLImage>, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Optional<Link<Text>>, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>)>>, Group<TupleTableColumnContent<AppRelease, KeyPathComparator<AppRelease>, (TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>)>>, Group<TupleTableColumnContent<AppRelease, KeyPathComparator<AppRelease>, (TableColumn<AppRelease, KeyPathComparator<AppRelease>, Toggle<EmptyView>, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Toggle<EmptyView>, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>)>>)>> {
+        let imageColumn: TableColumn<TableRowValue, KeyPathComparator<TableRowValue>, URLImage?, Text> = TableColumn("", value: \TableRowValue.repository.owner.avatar_url, comparator: StringComparator()) { item in
             if let avatar_url = item.repository.owner.avatar_url, let url = URL(string: avatar_url) {
                 URLImage(url: url, resizable: .fit)
             }
@@ -996,22 +1035,22 @@ struct ReleasesTableView : View, ItemTableView {
         let stateColumn = ostrColumn(named: "State", path: \.release.assets.first?.state)
         let downloadsColumn = onumColumn(named: "Downloads", path: \.release.assets.first?.download_count)
 
-        let sizeColumn = TableColumn("Size", value: \TableElement.release.assets.first?.size, comparator: OptionalNumericComparator()) { item in
+        let sizeColumn = TableColumn("Size", value: \TableRowValue.release.assets.first?.size, comparator: OptionalNumericComparator()) { item in
             Text(item.release.assets.first?.size.localizedByteCount(countStyle: .file) ?? "N/A")
         }
 
         let draftColumn = boolColumn(named: "Draft", path: \.release.draft)
         let preReleaseColumn = boolColumn(named: "Pre-Release", path: \.release.prerelease)
 
-        let downloadColumn = TableColumn("Download", value: \TableElement.release.assets.first?.browser_download_url.lastPathComponent, comparator: StringComparator()) { item in
+        let downloadColumn = TableColumn("Download", value: \TableRowValue.release.assets.first?.browser_download_url.lastPathComponent, comparator: StringComparator()) { item in
             //Text(item.assets.first?.state ?? "N/A")
             //Toggle(isOn: .constant(item.draft)) { EmptyView () }
             if let asset = item.release.assets.first {
                 Link("Download \(asset.size.localizedByteCount(countStyle: .file))", destination: asset.browser_download_url)
             }
         }
-        let tagColumn = TableColumn("Tag", value: \TableElement.release.tag_name)
-        let infoColumn = TableColumn("Info", value: \TableElement.release.body) { item in
+        let tagColumn = TableColumn("Tag", value: \TableRowValue.release.tag_name)
+        let infoColumn = TableColumn("Info", value: \TableRowValue.release.body) { item in
             Text((try? item.release.body.atx()) ?? "No info")
         }
 
@@ -1039,34 +1078,37 @@ struct ReleasesTableView : View, ItemTableView {
             infoColumn
         }
 
-        let columns = Group {
+        let tableColumnBody = Group {
             // these need to be broken up to help the typechecker solve it in a reasonable amount of time
             columnGroup1
             columnGroup2
             columnGroup3
         }
 
-        return Table(selection: $selection, sortOrder: $sortOrder, columns: { columns }, rows: {
-            ForEach(search(self.items)) { item in
-                TableRow(item)
-                    //.itemProvider { items.itemProvider }
-            }
-//            .onInsert(of: [Item.draggableType]) { index, providers in
-//                Item.fromItemProviders(providers) { items in
-//                    item.items.insert(contentsOf: items, at: index)
-//                }
-//            }
-        })
-        .tableStyle(.inset(alternatesRowBackgrounds: false))
-        .font(Font.body.monospacedDigit())
-        .onChange(of: sortOrder) {
-            self.items.sort(using: $0)
+        return tableColumnBody
+    }
+
+    var tableRowBody: some TableRowContent {
+        ForEach(filterRows(self.items)) { item in
+            TableRow(item)
+                //.itemProvider { items.itemProvider }
         }
-        .focusedSceneValue(\.selection, .constant(itemSelection))
-        .focusedSceneValue(\.reloadCommand, .constant({
-            await fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData)
-        }))
-        .searchable(text: $searchText)
+    }
+
+    var tableView: Table<TableRowValue, Self, Self> {
+        Table(selection: Binding(get: { selection }, set: { selection = $0 }), sortOrder: Binding(get: { sortOrder }, set: { sortOrder = $0 }), columns: { self }, rows: { self })
+    }
+
+    var table: some View {
+        tableView
+            .tableStyle(.inset(alternatesRowBackgrounds: false))
+            .font(Font.body.monospacedDigit())
+            .onChange(of: sortOrder) {
+                self.items.sort(using: $0)
+            }
+            .focusedSceneValue(\.selection, .constant(itemSelection))
+            .focusedSceneValue(\.reloadCommand, .constant({ await fetchApps(cache: .reloadIgnoringLocalAndRemoteCacheData) }))
+            .searchable(text: $searchText)
     }
 
     /// The currently selected item
@@ -1078,7 +1120,7 @@ struct ReleasesTableView : View, ItemTableView {
         return Selection.app(item)
     }
 
-    private func search(_ items: [TableElement]) -> [TableElement] {
+    func filterRows(_ items: [TableRowValue]) -> [TableRowValue] {
         searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? items
         : items.filter { item in
             item.repository.name.localizedCaseInsensitiveContains(searchText) == true
@@ -1087,61 +1129,79 @@ struct ReleasesTableView : View, ItemTableView {
     }
 }
 
+/// A container for a Table
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-protocol ItemTableView {
-    associatedtype TableElement : Identifiable
+protocol ItemTableView : TableRowContent & TableColumnContent where TableColumnSortComparator == KeyPathComparator<TableRowValue> {
 
     /// The items that this table holds
-    var items: [TableElement] { get nonmutating set }
+    var items: [TableRowValue] { get nonmutating set }
 
     /// The current selection, if any
-    var selection: TableElement.ID? { get nonmutating set }
+    var selection: TableRowValue.ID? { get nonmutating set }
 
     /// The current sort orders
-    var sortOrder: [KeyPathComparator<TableElement>] { get nonmutating set }
+    var sortOrder: [KeyPathComparator<TableRowValue>] { get nonmutating set }
 
+    /// Filters the rows based on the current search term
+    func filterRows(_ items: [TableRowValue]) -> [TableRowValue]
+
+    /// The table view of the data
+    var tableView: Table<TableRowValue, Self, Self> { get }
 }
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-extension ItemTableView where Self : View {
+extension ItemTableView {
+    /// By default no searching is performed
+    func filterRows(_ items: [TableRowValue]) -> [TableRowValue] {
+        return items
+    }
 }
 
+//@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+//extension ItemTableView where TableRowBody.TableRowValue == TableColumnBody.TableRowValue, TableColumnBody.TableColumnSortComparator == TableColumnSortComparator, TableColumnSortComparator.Compared == TableRowBody.TableRowValue, TableRowValue == TableColumnBody.TableRowValue {
+//    /// The table view onto this data
+//    var tableView: Table<TableRowValue, Self, Self> {
+//        let table = Table(selection: Binding(get: { selection }, set: { selection = $0 }), sortOrder: Binding(get: { sortOrder }, set: { sortOrder = $0 }), columns: { self }, rows: { self })
+//
+//        return table
+//     }
+//}
 
 @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 extension ItemTableView {
 
-    func dateColumn(named key: LocalizedStringKey, path: KeyPath<TableElement, Date>) -> TableColumn<TableElement, KeyPathComparator<TableElement>, Text, Text> {
+    func dateColumn(named key: LocalizedStringKey, path: KeyPath<TableRowValue, Date>) -> TableColumn<TableRowValue, KeyPathComparator<TableRowValue>, Text, Text> {
         TableColumn(key, value: path, comparator: DateComparator()) { item in
             Text(item[keyPath: path].localizedDate(dateStyle: .short, timeStyle: .short))
         }
     }
 
-    func numColumn<T: BinaryInteger>(named key: LocalizedStringKey, path: KeyPath<TableElement, T>) -> TableColumn<TableElement, KeyPathComparator<TableElement>, Text, Text> {
+    func numColumn<T: BinaryInteger>(named key: LocalizedStringKey, path: KeyPath<TableRowValue, T>) -> TableColumn<TableRowValue, KeyPathComparator<TableRowValue>, Text, Text> {
         TableColumn(key, value: path, comparator: NumericComparator()) { item in
             Text(item[keyPath: path].localizedNumber())
         }
     }
 
-    func boolColumn(named key: LocalizedStringKey, path: KeyPath<TableElement, Bool>) -> TableColumn<TableElement, KeyPathComparator<TableElement>, Toggle<EmptyView>, Text> {
+    func boolColumn(named key: LocalizedStringKey, path: KeyPath<TableRowValue, Bool>) -> TableColumn<TableRowValue, KeyPathComparator<TableRowValue>, Toggle<EmptyView>, Text> {
         TableColumn(key, value: path, comparator: BoolComparator()) { item in
             Toggle(isOn: .constant(item[keyPath: path])) { EmptyView () }
         }
     }
 
     /// Non-optional string column
-    func strColumn(named key: LocalizedStringKey, path: KeyPath<TableElement, String>) -> TableColumn<TableElement, KeyPathComparator<TableElement>, Text, Text> {
+    func strColumn(named key: LocalizedStringKey, path: KeyPath<TableRowValue, String>) -> TableColumn<TableRowValue, KeyPathComparator<TableRowValue>, Text, Text> {
         TableColumn(key, value: path, comparator: .localizedStandard) { item in
             Text(item[keyPath: path])
         }
     }
 
-    func ostrColumn(named key: LocalizedStringKey, path: KeyPath<TableElement, String?>) -> TableColumn<TableElement, KeyPathComparator<TableElement>, Text, Text> {
+    func ostrColumn(named key: LocalizedStringKey, path: KeyPath<TableRowValue, String?>) -> TableColumn<TableRowValue, KeyPathComparator<TableRowValue>, Text, Text> {
         TableColumn(key, value: path, comparator: StringComparator()) { item in
             Text(item[keyPath: path] ?? "")
         }
     }
 
-    func onumColumn<T: BinaryInteger>(named key: LocalizedStringKey, path: KeyPath<TableElement, T?>) -> TableColumn<TableElement, KeyPathComparator<TableElement>, Text, Text> {
+    func onumColumn<T: BinaryInteger>(named key: LocalizedStringKey, path: KeyPath<TableRowValue, T?>) -> TableColumn<TableRowValue, KeyPathComparator<TableRowValue>, Text, Text> {
         TableColumn(key, value: path, comparator: NumComparator()) { item in
             Text(item[keyPath: path]?.localizedNumber() ?? "")
         }
