@@ -1,51 +1,9 @@
-/**
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License as
- published by the Free Software Foundation, either version 3 of the
- License, or (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+import Swift
+import SwiftUI
 import FairApp
 
-@available(macOS 12.0, iOS 15.0, *)
-@main public enum AppContainer : FairApp.FairContainer {
-    public static func main() throws { try launch() }
-}
-
-// Everything above this line must remain unmodified.
-
-@available(macOS 12.0, iOS 15.0, *)
-public extension AppContainer {
-
-    @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
-    var settingsView : some View {
-        AppSettingsView().environmentObject(appEnv)
-    }
-
-    var rootScene: some Scene {
-        WindowGroup {
-            NavigationRootView()
-                .environmentObject(store)
-                .task(appEnv.windowAppeared)
-    /// The root scene for this application
-    func rootScene(store: Store) -> some Scene {
-        WindowGroup {
-            NavigationRootView().environmentObject(store)
-        }
-        .commands {
-            SidebarCommands()
-            AppFairCommands()
-            ToolbarCommands()
-        }
-    }
-}
+@available(*, deprecated, message: "work in progress")
+func wip<T>(_ value: T) -> T { value }
 
 public extension Bundle {
     /// The URL for the App's resource bundle
@@ -56,7 +14,7 @@ public extension Bundle {
 
 /// An app that is available to download.
 ///
-/// This is a synthesis of two separate API responses: the `repo`, which is the host to the app itself, and the `rel`, which is the release build for which the app as part of the upsteam repo.
+/// This is a synthesis of two separate API responses: the `repository`, which is the host to the app itself, and the `release`, which is the release build in the upstream repository.
 public struct AppRelease : Hashable, Identifiable {
     public let repository: FairHub.RepositoryInfo
     public let release: FairHub.ReleaseInfo
@@ -89,8 +47,8 @@ enum Selection {
 }
 
 /// The manager for the current app fair
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-@MainActor public final class AppEnv: AppEnvironmentObject {
+@available(macOS 12.0, iOS 15.0, *)
+open class Store: AppStoreObject {
     @AppStorage("hubHost") public var hubHost = "https://api.github.com"
     @AppStorage("hubToken") public var hubToken = ""
     @AppStorage("hubOrg") public var hubOrg = "appfair"
@@ -99,7 +57,7 @@ enum Selection {
     @Published public var errors: [(AppFailure?, Error)] = []
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct AppFairCommands: Commands {
     @FocusedBinding(\.selection) private var selection: Selection??
     @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
@@ -115,7 +73,7 @@ struct AppFairCommands: Commands {
 
 //        CommandMenu("Fair") {
 //            Button("Find") {
-//                appEnv.activateFind()
+//                store.activateFind()
 //            }
 //            .keyboardShortcut("F")
 //        }
@@ -154,8 +112,8 @@ public enum AppFailure {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-public extension AppEnv {
+@available(macOS 12.0, iOS 15.0, *)
+public extension Store {
     typealias Item = URL
 
     var hub: FairHub {
@@ -266,21 +224,21 @@ public extension AppEnv {
         var label: TintedLabel {
             switch self {
             case .popular:
-                return TintedLabel(title: "Popular", systemName: "star", tint: Color.yellow)
+                return TintedLabel("Popular", systemName: "star", tint: Color.yellow)
             case .favorites:
-                return TintedLabel(title: "Favorites", systemName: "pin", tint: Color.red)
+                return TintedLabel("Favorites", systemName: "pin", tint: Color.red)
             case .recent:
-                return TintedLabel(title: "Recent", systemName: "flag", tint: Color.purple) // clock or bolt?
+                return TintedLabel("Recent", systemName: "flag", tint: Color.purple) // clock or bolt?
             case .category(let grouping):
                 return grouping.label
             case .search(let term):
-                return TintedLabel(title: "Search: \(term)", systemName: "magnifyingglass", tint: Color.gray)
+                return TintedLabel("Search: \(term)", systemName: "magnifyingglass", tint: Color.gray)
             }
         }
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct GeneralSettingsView: View {
     @AppStorage("showPreview") private var showPreview = true
     @AppStorage("fontSize") private var fontSize = 12.0
@@ -296,9 +254,9 @@ struct GeneralSettingsView: View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct AdvancedSettingsView: View {
-    @EnvironmentObject var appEnv: AppEnv
+    @EnvironmentObject var store: Store
 
     func checkButton(_ parts: String...) -> some View {
         EmptyView()
@@ -312,19 +270,19 @@ struct AdvancedSettingsView: View {
         VStack {
             Form {
                 HStack {
-                    TextField("Hub", text: appEnv.$hubHost)
-                    checkButton(appEnv.hubHost)
+                    TextField("Hub", text: store.$hubHost)
+                    checkButton(store.hubHost)
                 }
                 HStack {
-                    TextField("Organization", text: appEnv.$hubOrg)
-                    checkButton(appEnv.hubHost, appEnv.hubOrg)
+                    TextField("Organization", text: store.$hubOrg)
+                    checkButton(store.hubHost, store.hubOrg)
                 }
                 HStack {
-                    TextField("Repository", text: appEnv.$hubRepo)
-                    checkButton(appEnv.hubHost, appEnv.hubOrg, appEnv.hubRepo)
+                    TextField("Repository", text: store.$hubRepo)
+                    checkButton(store.hubHost, store.hubOrg, store.hubRepo)
                 }
                 HStack {
-                    SecureField("Token", text: appEnv.$hubToken)
+                    SecureField("Token", text: store.$hubToken)
                 }
 
                 Text(atx: "The token is optional, and is only needed for development or advanced usage. One can be created at your [GitHub Personal access token](https://github.com/settings/tokens) setting").multilineTextAlignment(.trailing)
@@ -336,7 +294,7 @@ struct AdvancedSettingsView: View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 public struct HelpButton : View {
     let url: String
     @Environment(\.openURL) var openURL
@@ -352,20 +310,9 @@ public struct HelpButton : View {
         }
         .buttonStyle(.bordered)
     }
-
-    /// The app-wide settings view
-    @ViewBuilder static func settingsView(store: Store) -> some SwiftUI.View {
-        AppSettingsView().environmentObject(store)
-    }
 }
 
-/// The shared app environment
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class Store: AppStoreObject {
-    @AppStorage("someToggle") public var someToggle = false
-}
-
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 public struct AppSettingsView: View {
     public enum Tabs: Hashable {
         case general, advanced
@@ -385,20 +332,20 @@ public struct AppSettingsView: View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 public struct NavigationRootView : View {
-    @EnvironmentObject var appEnv: AppEnv
+    @EnvironmentObject var store: Store
 
     public var body: some View {
         NavigationView {
             SidebarView().frame(minWidth: 160) // .controlSize(.large)
             AppsListView()
-            DetailView()
+            //DetailView()
         }
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 public struct DetailView : View {
     @FocusedBinding(\.selection) private var selection: Selection??
 
@@ -420,7 +367,7 @@ public struct DetailView : View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct AppInfoView : Equatable, View {
     let app: AppRelease
 
@@ -441,7 +388,7 @@ struct AppInfoView : Equatable, View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct RunInfoView : Equatable, View {
     let run: FairHub.WorkflowRun
 
@@ -455,11 +402,17 @@ struct RunInfoView : Equatable, View {
 }
 
 /// A label that tints its image
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 public struct TintedLabel : View {
     public let title: LocalizedStringKey
     public let systemName: StaticString
     public let tint: Color
+
+    public init(_ title: LocalizedStringKey, systemName: StaticString, tint: Color) {
+        self.title = title
+        self.systemName = systemName
+        self.tint = tint
+    }
 
     public var body: some View {
         Label(title: { Text(title) }) {
@@ -472,14 +425,14 @@ public struct TintedLabel : View {
 ////                .listItemTint(ListItemTint.fixed(tint))
 
             Image(systemName: systemName.description)
-                //.symbolRenderingMode(.palette)
-                .symbolRenderingMode(.multicolor)
+                .symbolRenderingMode(.palette)
+                //.symbolRenderingMode(.multicolor)
                 //.symbolVariant(.circle)
-                //.symbolVariant(.fill)
+                .symbolVariant(.fill)
                 .foregroundStyle(
-                    .linearGradient(colors: [tint, .white], startPoint: .top, endPoint: .bottomTrailing),
-                    .linearGradient(colors: [.green, .black], startPoint: .top, endPoint: .bottomTrailing),
-                    .linearGradient(colors: [.blue, .black], startPoint: .top, endPoint: .bottomTrailing)
+//                    .linearGradient(colors: [.green, .black], startPoint: .top, endPoint: .bottomTrailing),
+//                    .linearGradient(colors: [.blue, .black], startPoint: .top, endPoint: .bottomTrailing),
+                        .linearGradient(colors: [tint, .white], startPoint: .bottom, endPoint: .topTrailing)
                 )
                 //.font(.title)
 
@@ -494,8 +447,8 @@ public extension AppCategory {
         case research
         case communicate
         case entertain
-        case live
         case game
+        case live
         case work
 
         /// All the categories that belong to this grouping
@@ -503,23 +456,23 @@ public extension AppCategory {
             AppCategory.allCases.filter({ $0.groupings.contains(self) })
         }
 
-        @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+        @available(macOS 12.0, iOS 15.0, *)
         public var label: TintedLabel {
             switch self {
             case .create:
-                return TintedLabel(title: "Arts & Crafts", systemName: "paintpalette", tint: Color.cyan)
+                return TintedLabel("Arts & Crafts", systemName: "paintpalette", tint: Color.cyan)
             case .research:
-                return TintedLabel(title: "Knowledge", systemName: "book", tint: Color.green)
+                return TintedLabel("Knowledge", systemName: "book", tint: Color.green)
             case .communicate:
-                return TintedLabel(title: "Communication", systemName: "envelope", tint: Color.pink)
+                return TintedLabel("Communication", systemName: "envelope", tint: Color.orange)
             case .entertain:
-                return TintedLabel(title: "Entertainment", systemName: "sparkles.tv", tint: Color.teal)
-            case .live:
-                return TintedLabel(title: "Lifestyle & Health", systemName: "house", tint: Color.mint)
+                return TintedLabel("Entertainment", systemName: "sparkles.tv", tint: Color.teal)
             case .game:
-                return TintedLabel(title: "Diversion", systemName: "circle.hexagongrid", tint: Color.yellow)
+                return TintedLabel("Diversions", systemName: "circle.hexagongrid", tint: Color.red)
+            case .live:
+                return TintedLabel("Health & Home", systemName: "house", tint: Color.yellow)
             case .work:
-                return TintedLabel(title: "Work", systemName: "briefcase", tint: Color.brown)
+                return TintedLabel("Work", systemName: "briefcase", tint: Color.brown)
             }
         }
     }
@@ -577,9 +530,9 @@ public extension AppCategory {
 
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct SidebarView: View {
-    @EnvironmentObject var appEnv: AppEnv
+    @EnvironmentObject var store: Store
 
     func shortCut(for grouping: AppCategory.Grouping, offset: Int) -> KeyboardShortcut {
         let index = (AppCategory.Grouping.allCases.enumerated().first(where: { $0.element == grouping })?.offset ?? 0) + offset
@@ -630,14 +583,14 @@ struct SidebarView: View {
         }
     }
 
-    func item(_ item: AppEnv.SidebarItem) -> some View {
+    func item(_ item: Store.SidebarItem) -> some View {
         NavigationLink(destination: AppsListView(item: item)) {
             item.label
-                .badge(appEnv.badgeCount(for: item))
+                .badge(store.badgeCount(for: item))
         }
     }
 
-    func tool(_ item: AppEnv.SidebarItem) -> some CustomizableToolbarContent {
+    func tool(_ item: Store.SidebarItem) -> some CustomizableToolbarContent {
         ToolbarItem(id: item.id, placement: .automatic, showsByDefault: false) {
             Button(action: {
                 selectItem(item)
@@ -649,7 +602,7 @@ struct SidebarView: View {
         }
     }
 
-    func selectItem(_ item: AppEnv.SidebarItem) {
+    func selectItem(_ item: Store.SidebarItem) {
         print("### SELECTED", item)
     }
 }
@@ -682,7 +635,7 @@ public struct URLImage : View, Equatable {
     }
 
     public var body: some View {
-        if sync == false, #available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *) {
+        if sync == false, #available(macOS 12.0, iOS 15.0, *) {
             AsyncImage(url: url, scale: scale) { phase in
                 if let image = phase.image {
                     if let resizable = resizable {
@@ -751,7 +704,7 @@ extension FocusedValues {
 }
 
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct DisplayModePicker: View {
     @Binding var mode: AppsListView.ViewMode
 
@@ -765,7 +718,7 @@ struct DisplayModePicker: View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 extension AppsListView.ViewMode {
     var labelContent: (name: LocalizedStringKey, systemImage: String) {
         switch self {
@@ -781,9 +734,9 @@ extension AppsListView.ViewMode {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct AppsListView: View {
-    @EnvironmentObject var appEnv: AppEnv
+    @EnvironmentObject var store: Store
     @SceneStorage("viewMode") private var mode: ViewMode = .table
 
     /// Whether to display the items as a table or gallery
@@ -793,7 +746,7 @@ struct AppsListView: View {
         case gallery
     }
 
-    var item: AppEnv.SidebarItem? = nil
+    var item: Store.SidebarItem? = nil
 
     var body: some View {
         Group {
@@ -824,11 +777,11 @@ struct AppsListView: View {
 }
 
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct SampleImagesListView: View {
     /// TODO: also try https://unsplash.com
     @State var allImageURLs = (1000...1100).compactMap({ URL(string: "https://picsum.photos/id/\($0)") })
-    @EnvironmentObject var appEnv: AppEnv
+    @EnvironmentObject var store: Store
 
     var body: some View {
         List(allImageURLs, id: \.self) { url in
@@ -841,7 +794,7 @@ struct SampleImagesListView: View {
                 }
                 .swipeActions(edge: .leading, allowsFullSwipe: true) {
                     Button {
-                        appEnv.share(url)
+                        store.share(url)
                     } label: {
                         Label("Share", systemImage: "shareplay")
                     }
@@ -849,14 +802,14 @@ struct SampleImagesListView: View {
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button {
-                        appEnv.markFavorite(url)
+                        store.markFavorite(url)
                     } label: {
                         Label("Favorite", systemImage: "pin")
                     }
                     .tint(.orange)
 
                     Button {
-                        appEnv.deleteItem(url)
+                        store.deleteItem(url)
                     } label: {
                         Label("Delete", systemImage: "trash")
                     }
@@ -866,17 +819,33 @@ struct SampleImagesListView: View {
             }
         }
 //        .refreshable {
-//            await appEnv.loadResults(cache: .reloadRevalidatingCacheData)
+//            await store.loadResults(cache: .reloadRevalidatingCacheData)
 //        }
 //        .navigationTitle("Apps")
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct MessageDetailsView: View {
     let message: String
 
-    func settingsView(store: Store) -> some View {
-        AppSettingsView().environmentObject(store)
+    var body: some View {
+        Text("Details for \(message)")
+            .font(.largeTitle)
+            .toolbar {
+                Button(action: {}) {
+                    Image(systemName: "square.and.arrow.up")
+                }
+            }
     }
 }
+
+@available(macOS 12.0, iOS 15.0, *)
+struct ImageDetailsView: View {
+    let url: URL
+
+    var body: some View {
+        URLImage(url: url.picsum(width: 1000, height: 1000), resizable: ContentMode.fill)
+    }
+}
+

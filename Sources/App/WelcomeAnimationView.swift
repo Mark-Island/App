@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct WelcomeAnimationView: View {
     var body: some View {
         VStack {
@@ -22,7 +22,7 @@ struct WelcomeAnimationView: View {
 }
 
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct OffsetsTimelineSchedule: TimelineSchedule {
     let timeOffsets: [TimeInterval]
 
@@ -48,14 +48,14 @@ struct OffsetsTimelineSchedule: TimelineSchedule {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 extension TimelineSchedule where Self == OffsetsTimelineSchedule {
     static func offsets(_ timeOffsets: [TimeInterval]) -> OffsetsTimelineSchedule {
             .init(timeOffsets: timeOffsets)
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct AnimatedEmoji: View {
     let keyframes: [KeyFrame]
 
@@ -68,7 +68,7 @@ struct AnimatedEmoji: View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct Emoji: View {
     let date: Date
     let keyframes: [KeyFrame]
@@ -109,7 +109,7 @@ struct Emoji: View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct Bubble: View {
     let text: Text
 
