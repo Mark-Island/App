@@ -35,9 +35,20 @@ extension ItemTableView {
     func filterRows(_ items: [TableRowValue]) -> [TableRowValue] {
         return items
     }
+
+    var tableRowBody: some TableRowContent {
+//        ForEach(filterRows(self.items)) { item in
+//            TableRow(item)
+//                //.itemProvider { items.itemProvider }
+//        }
+        ForEach(items) { item in
+            TableRow(item)
+                //.itemProvider { items.itemProvider }
+        }
+    }
 }
 
-//@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+//@available(macOS 12.0, iOS 15.0, *)
 //extension ItemTableView where TableRowBody.TableRowValue == TableColumnBody.TableRowValue, TableColumnBody.TableColumnSortComparator == TableColumnSortComparator, TableColumnSortComparator.Compared == TableRowBody.TableRowValue, TableRowValue == TableColumnBody.TableRowValue {
 //    /// The table view onto this data
 //    var tableView: Table<TableRowValue, Self, Self> {
@@ -55,7 +66,8 @@ extension ItemTableView {
 
     func dateColumn(named key: LocalizedStringKey, path: KeyPath<TableRowValue, Date>) -> TableColumn<TableRowValue, KeyPathComparator<TableRowValue>, Text, Text> {
         TableColumn(key, value: path, comparator: DateComparator()) { item in
-            Text(item[keyPath: path].localizedDate(dateStyle: .short, timeStyle: .short))
+            Text(item[keyPath: path].formatted(date: .abbreviated, time: .omitted))
+            //Text(item[keyPath: path].localizedDate(dateStyle: .short, timeStyle: .short))
         }
     }
 
@@ -91,7 +103,7 @@ extension ItemTableView {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 extension SortComparator {
     func reorder(_ result: ComparisonResult) -> ComparisonResult {
         switch (order, result) {
@@ -104,7 +116,7 @@ extension SortComparator {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct BoolComparator : SortComparator {
     var order: SortOrder = SortOrder.forward
 
@@ -118,7 +130,7 @@ struct BoolComparator : SortComparator {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct DateComparator : SortComparator {
     var order: SortOrder = SortOrder.forward
 
@@ -129,7 +141,7 @@ struct DateComparator : SortComparator {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct StringComparator : SortComparator {
     var order: SortOrder = SortOrder.forward
 
@@ -138,7 +150,7 @@ struct StringComparator : SortComparator {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct NumericComparator<N: Numeric & Comparable> : SortComparator {
     var order: SortOrder = SortOrder.forward
 
@@ -147,7 +159,7 @@ struct NumericComparator<N: Numeric & Comparable> : SortComparator {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct NumComparator<N: Numeric & Comparable> : SortComparator {
     var order: SortOrder = SortOrder.forward
 
@@ -157,7 +169,7 @@ struct NumComparator<N: Numeric & Comparable> : SortComparator {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct OptionalNumericComparator : SortComparator {
     var order: SortOrder = SortOrder.forward
 
@@ -167,7 +179,7 @@ struct OptionalNumericComparator : SortComparator {
 }
 
 
-//@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+//@available(macOS 12.0, iOS 15.0, *)
 //extension SortComparator where Self == Int?.Comparator {
 //    public static var optionalNumeric: Int.Comparator {
 //
@@ -180,7 +192,7 @@ struct OptionalNumericComparator : SortComparator {
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 struct ActionsTableView : View, ItemTableView {
-    @EnvironmentObject var appEnv: AppEnv
+    @EnvironmentObject var store: Store
     typealias TableRowValue = FairHub.WorkflowRun
     @State var selection: TableRowValue.ID? = nil
     @State var sortOrder = [KeyPathComparator(\TableRowValue.created_at)]
@@ -195,11 +207,16 @@ struct ActionsTableView : View, ItemTableView {
     func fetchRuns(cache: URLRequest.CachePolicy? = nil) async {
         self.items = []
         do {
-            self.items = try await appEnv.fetchRuns(cache: cache).workflow_runs
+            self.items = try await store.fetchRuns(cache: cache).workflow_runs
         } catch {
-            appEnv.errors.append((nil, error))
+            store.errors.append((nil, error))
         }
     }
+
+//    var tableColumnBody: TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text> {
+//        let ownerColumn = ostrColumn(named: "Owner", path: \.head_repository?.owner.login)
+//        return ownerColumn
+//    }
 
     //var tableColumnBody: some TableColumnContent {
     var tableColumnBody: Group<TupleTableColumnContent<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, (TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, URLImage?, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>)>> {
@@ -236,19 +253,13 @@ struct ActionsTableView : View, ItemTableView {
         return tableColumnBody
     }
 
-    var tableRowBody: some TableRowContent {
-        ForEach(filterRows(self.items)) { item in
-            TableRow(item)
-                //.itemProvider { items.itemProvider }
-        }
-    }
-
     var tableView: Table<TableRowValue, Self, Self> {
-        Table(selection: Binding(get: { selection }, set: { selection = $0 }), sortOrder: Binding(get: { sortOrder }, set: { sortOrder = $0 }), columns: { self }, rows: { self })
+        Table(selection: $selection, sortOrder: $sortOrder, columns: { self }, rows: { self })
     }
 
     var table: some View {
-        tableView
+        //print(wip(Date()), "table view body")
+        return tableView
             .tableStyle(.inset(alternatesRowBackgrounds: true))
             .font(Font.body.monospacedDigit())
             .onChange(of: sortOrder) {
@@ -285,7 +296,7 @@ struct ActionsTableView : View, ItemTableView {
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 struct ReleasesTableView : View, ItemTableView {
-    @EnvironmentObject var appEnv: AppEnv
+    @EnvironmentObject var store: Store
     typealias TableRowValue = AppRelease
     @State var selection: TableRowValue.ID? = nil
     @State var sortOrder = [KeyPathComparator(\TableRowValue.release.published_at)]
@@ -299,13 +310,13 @@ struct ReleasesTableView : View, ItemTableView {
 
     func fetchApps(cache: URLRequest.CachePolicy? = nil) async {
         self.items = []
-        async let rels = appEnv.fetchReleases(cache: cache)
-        async let forks = appEnv.fetchForks(cache: cache)
+        async let rels = store.fetchReleases(cache: cache)
+        async let forks = store.fetchForks(cache: cache)
         do {
-            self.items = try await appEnv.match(rels, forks)
+            self.items = try await store.match(rels, forks)
         } catch {
             Task { // otherwise warnings about accessing off of the main thread
-                appEnv.errors.append((nil, error))
+                store.errors.append((nil, error))
             }
         }
     }
@@ -381,19 +392,13 @@ struct ReleasesTableView : View, ItemTableView {
         return tableColumnBody
     }
 
-    var tableRowBody: some TableRowContent {
-        ForEach(filterRows(self.items)) { item in
-            TableRow(item)
-                //.itemProvider { items.itemProvider }
-        }
-    }
-
     var tableView: Table<TableRowValue, Self, Self> {
-        Table(selection: Binding(get: { selection }, set: { selection = $0 }), sortOrder: Binding(get: { sortOrder }, set: { sortOrder = $0 }), columns: { self }, rows: { self })
+        Table(selection: $selection, sortOrder: $sortOrder, columns: { self }, rows: { self })
     }
 
     var table: some View {
-        tableView
+        //print(wip(Date()), "table view body")
+        return tableView
             .tableStyle(.inset(alternatesRowBackgrounds: false))
             .font(Font.body.monospacedDigit())
             .onChange(of: sortOrder) {

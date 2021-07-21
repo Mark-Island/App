@@ -17,15 +17,19 @@ import XCTest
 @testable import App
 import FairCore
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 final class AppTests: XCTestCase {
     func testAppScene() throws {
-        let _ = AppScene()
+        let store = AppContainer.AppStore()
+        let container = AppContainer()
+        let scene = container.rootScene(store: store)
+        let settings = container.settingsView(store: store)
+        let (_, _) = (scene, settings)
     }
 
-    func testHubAPI() throws {
-        let hub = FairManager().hub
-        hub.requestAsync(Fair)
-    }
+//    func testHubAPI() throws {
+//        let hub = FairManager().hub
+//        hub.requestAsync(Fair)
+//    }
 }
 
