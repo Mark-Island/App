@@ -21,6 +21,10 @@ protocol ItemTableView : TableRowContent {
 
     /// Filters the rows based on the current search term
     func filterRows(_ items: [TableRowValue]) -> [TableRowValue]
+
+    /// The type of column that is to be displayed
+    associatedtype Columnator: SetAlgebra
+    func columnVisible(element: Columnator.Element) -> Bool
 }
 
 @available(macOS 12.0, *)
@@ -34,26 +38,13 @@ extension ItemTableView {
     }
 
     var tableRowBody: some TableRowContent {
-//        ForEach(filterRows(self.items)) { item in
-//            TableRow(item)
-//                //.itemProvider { items.itemProvider }
-//        }
-        ForEach(items) { item in
+        ForEach(filterRows(self.items)) { item in
             TableRow(item)
                 //.itemProvider { items.itemProvider }
         }
     }
 }
 
-//@available(macOS 12.0, iOS 15.0, *)
-//extension ItemTableView where TableRowBody.TableRowValue == TableColumnBody.TableRowValue, TableColumnBody.TableColumnSortComparator == TableColumnSortComparator, TableColumnSortComparator.Compared == TableRowBody.TableRowValue, TableRowValue == TableColumnBody.TableRowValue {
-//    /// The table view onto this data
-//    var tableView: Table<TableRowValue, Self, Self> {
-//        let table = Table(selection: Binding(get: { selection }, set: { selection = $0 }), sortOrder: Binding(get: { sortOrder }, set: { sortOrder = $0 }), columns: { self }, rows: { self })
-//
-//        return table
-//     }
-//}
 
 @available(macOS 12.0, *)
 @available(iOS, unavailable)
@@ -196,6 +187,20 @@ struct ActionsTableView : View, ItemTableView {
     @State var searchText: String = ""
     @State var items: [TableRowValue] = []
 
+    struct Columnator : OptionSet {
+        public static let defaultColumns: Self = [.icon, .name]
+
+        public let rawValue: Int
+        public init(rawValue: Int) { self.rawValue = rawValue }
+
+        public static let icon = Self(rawValue: 1 << 0)
+        public static let name = Self(rawValue: 1 << 1)
+    }
+
+    func columnVisible(element: Columnator.Element) -> Bool {
+        true
+    }
+
     var body: some View {
         table
             .task { await fetchRuns() }
@@ -236,9 +241,9 @@ struct ActionsTableView : View, ItemTableView {
                 conclusionColumn
                 runColumn
                 authorColumn
-                createdColumn
+                //createdColumn
                 updatedColumn
-                hashColumn.width(ideal: 350) // about the right length to fit a SHA-1 hash
+                //hashColumn.width(ideal: 350) // about the right length to fit a SHA-1 hash
             }
 
             tableColumnBody
@@ -246,7 +251,7 @@ struct ActionsTableView : View, ItemTableView {
     }
 
     var table: some View {
-        //print(wip(Date()), "table view body")
+        //dbg("table view body")
         return tableView
             .tableStyle(.inset(alternatesRowBackgrounds: true))
             .font(Font.body.monospacedDigit())
@@ -290,6 +295,20 @@ struct ReleasesTableView : View, ItemTableView {
     @State var sortOrder = [KeyPathComparator(\TableRowValue.release.published_at)]
     @State var searchText: String = ""
     @State var items: [TableRowValue] = []
+
+    struct Columnator : OptionSet {
+        public static let defaultColumns: Self = [.icon, .name]
+
+        public let rawValue: Int
+        public init(rawValue: Int) { self.rawValue = rawValue }
+
+        public static let icon = Self(rawValue: 1 << 0)
+        public static let name = Self(rawValue: 1 << 1)
+    }
+
+    func columnVisible(element: Columnator.Element) -> Bool {
+        store.releaseTableColumns.contains(element)
+    }
 
     var body: some View {
         table
@@ -347,13 +366,14 @@ struct ReleasesTableView : View, ItemTableView {
             }
 
             let columnGroup1 = Group {
-                //imageColumn.width(50)
+                //if columnVisible(.icon) { // “Closure containing control flow statement cannot be used with result builder 'TableColumnBuilder'”
+                    imageColumn.width(50)
+                //}
                 nameColumn
                 sizeColumn
                 downloadColumn
                 downloadsColumn
                 createdColumn
-                publishedColumn
             }
 
             let columnGroup2 = Group {
@@ -364,6 +384,7 @@ struct ReleasesTableView : View, ItemTableView {
             }
 
             let columnGroup3 = Group {
+                publishedColumn
                 draftColumn
                 preReleaseColumn
                 tagColumn
@@ -374,7 +395,7 @@ struct ReleasesTableView : View, ItemTableView {
                 // these need to be broken up to help the typechecker solve it in a reasonable amount of time
                 columnGroup1
                 columnGroup2
-                columnGroup3
+                //columnGroup3
             }
 
             tableColumnBody
