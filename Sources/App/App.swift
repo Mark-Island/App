@@ -35,13 +35,13 @@ public extension AppContainer {
                 .environmentObject(store)
                 .task(appEnv.windowAppeared)
     /// The root scene for this application
-    func rootScene(store: Store) -> some Scene {
+    static func rootScene(store: Store) -> some Scene {
         WindowGroup {
             NavigationRootView().environmentObject(store)
         }
         .commands {
             SidebarCommands()
-            AppFairCommands()
+            AppFairCommands(store: store)
             ToolbarCommands()
         }
     }
@@ -876,7 +876,7 @@ struct SampleImagesListView: View {
 struct MessageDetailsView: View {
     let message: String
 
-    func settingsView(store: Store) -> some View {
+    static func settingsView(store: Store) -> some View {
         AppSettingsView().environmentObject(store)
     }
 }

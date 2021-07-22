@@ -8,7 +8,7 @@ import FairApp
 @available(iOS, unavailable)
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
-protocol ItemTableView : TableRowContent & TableColumnContent where TableColumnSortComparator == KeyPathComparator<TableRowValue> {
+protocol ItemTableView : TableRowContent {
 
     /// The items that this table holds
     var items: [TableRowValue] { get nonmutating set }
@@ -21,9 +21,6 @@ protocol ItemTableView : TableRowContent & TableColumnContent where TableColumnS
 
     /// Filters the rows based on the current search term
     func filterRows(_ items: [TableRowValue]) -> [TableRowValue]
-
-    /// The table view of the data
-    var tableView: Table<TableRowValue, Self, Self> { get }
 }
 
 @available(macOS 12.0, *)
@@ -213,48 +210,39 @@ struct ActionsTableView : View, ItemTableView {
         }
     }
 
-//    var tableColumnBody: TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text> {
-//        let ownerColumn = ostrColumn(named: "Owner", path: \.head_repository?.owner.login)
-//        return ownerColumn
-//    }
-
-    //var tableColumnBody: some TableColumnContent {
-    var tableColumnBody: Group<TupleTableColumnContent<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, (TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, URLImage?, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>, TableColumn<ActionsTableView.TableRowValue, KeyPathComparator<ActionsTableView.TableRowValue>, Text, Text>)>> {
-
-        let imageColumn = TableColumn("", value: \TableRowValue.head_repository?.owner.avatar_url, comparator: StringComparator()) { item in
-            if let avatar_url = item.head_repository?.owner.avatar_url, let url = URL(string: avatar_url) {
-                URLImage(url: url, resizable: .fit)
+    var tableView: some View {
+        Table(selection: $selection, sortOrder: $sortOrder, columns: {
+            let imageColumn = TableColumn("", value: \TableRowValue.head_repository?.owner.avatar_url, comparator: StringComparator()) { item in
+                if let avatar_url = item.head_repository?.owner.avatar_url, let url = URL(string: avatar_url) {
+                    URLImage(url: url, resizable: .fit)
+                }
             }
-        }
 
-        let ownerColumn = ostrColumn(named: "Owner", path: \.head_repository?.owner.login)
-        let statusColumn = ostrColumn(named: "Status", path: \.status?.rawValue)
-        let conclusionColumn = ostrColumn(named: "Conclusion", path: \.conclusion?.rawValue)
-        let runColumn = numColumn(named: "Run #", path: \.run_number)
-        let authorColumn = strColumn(named: "Author", path: \.head_commit.author.name)
-        let createdColumn = dateColumn(named: "Created", path: \.created_at)
-        let updatedColumn = dateColumn(named: "Updated", path: \.updated_at)
-        let hashColumn = TableColumn("Hash", value: \TableRowValue.head_sha) { item in
-            Text(item.head_sha).font(Font.system(.body, design: .monospaced))
-        }
+            let ownerColumn = ostrColumn(named: "Owner", path: \.head_repository?.owner.login)
+            let statusColumn = ostrColumn(named: "Status", path: \.status?.rawValue)
+            let conclusionColumn = ostrColumn(named: "Conclusion", path: \.conclusion?.rawValue)
+            let runColumn = numColumn(named: "Run #", path: \.run_number)
+            let authorColumn = strColumn(named: "Author", path: \.head_commit.author.name)
+            let createdColumn = dateColumn(named: "Created", path: \.created_at)
+            let updatedColumn = dateColumn(named: "Updated", path: \.updated_at)
+            let hashColumn = TableColumn("Hash", value: \TableRowValue.head_sha) { item in
+                Text(item.head_sha).font(Font.system(.body, design: .monospaced))
+            }
 
-        let tableColumnBody = Group {
-            imageColumn.width(50)
-            ownerColumn
-            statusColumn
-            conclusionColumn
-            runColumn
-            authorColumn
-            createdColumn
-            updatedColumn
-            hashColumn.width(ideal: 350) // about the right length to fit a SHA-1 hash
-        }
+            let tableColumnBody = Group {
+                //imageColumn.width(50)
+                ownerColumn
+                statusColumn
+                conclusionColumn
+                runColumn
+                authorColumn
+                createdColumn
+                updatedColumn
+                hashColumn.width(ideal: 350) // about the right length to fit a SHA-1 hash
+            }
 
-        return tableColumnBody
-    }
-
-    var tableView: Table<TableRowValue, Self, Self> {
-        Table(selection: $selection, sortOrder: $sortOrder, columns: { self }, rows: { self })
+            tableColumnBody
+        }, rows: { self })
     }
 
     var table: some View {
@@ -321,83 +309,79 @@ struct ReleasesTableView : View, ItemTableView {
         }
     }
 
-    //var tableColumnBody: some TableColumnContent {
-    var tableColumnBody: Group<TupleTableColumnContent<AppRelease, KeyPathComparator<AppRelease>, (Group<TupleTableColumnContent<AppRelease, KeyPathComparator<AppRelease>, (TableColumn<AppRelease, KeyPathComparator<AppRelease>, Optional<URLImage>, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Optional<Link<Text>>, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>)>>, Group<TupleTableColumnContent<AppRelease, KeyPathComparator<AppRelease>, (TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>)>>, Group<TupleTableColumnContent<AppRelease, KeyPathComparator<AppRelease>, (TableColumn<AppRelease, KeyPathComparator<AppRelease>, Toggle<EmptyView>, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Toggle<EmptyView>, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>, TableColumn<AppRelease, KeyPathComparator<AppRelease>, Text, Text>)>>)>> {
-        let imageColumn: TableColumn<TableRowValue, KeyPathComparator<TableRowValue>, URLImage?, Text> = TableColumn("", value: \TableRowValue.repository.owner.avatar_url, comparator: StringComparator()) { item in
-            if let avatar_url = item.repository.owner.avatar_url, let url = URL(string: avatar_url) {
-                URLImage(url: url, resizable: .fit)
+    var tableView: some View {
+        Table(selection: $selection, sortOrder: $sortOrder, columns: {
+            let imageColumn: TableColumn<TableRowValue, KeyPathComparator<TableRowValue>, URLImage?, Text> = TableColumn("", value: \TableRowValue.repository.owner.avatar_url, comparator: StringComparator()) { item in
+                if let avatar_url = item.repository.owner.avatar_url, let url = URL(string: avatar_url) {
+                    URLImage(url: url, resizable: .fit)
+                }
             }
-        }
 
-        let nameColumn = ostrColumn(named: "Name", path: \.name)
+            let nameColumn = ostrColumn(named: "Name", path: \.name)
 
-        let createdColumn = dateColumn(named: "Created", path: \.release.created_at)
-        let publishedColumn = dateColumn(named: "Published", path: \.release.published_at)
-        let starsColumn = numColumn(named: "Stars", path: \.repository.stargazers_count)
-        let issuesColumn = numColumn(named: "Issues", path: \.repository.open_issues_count)
-        let forksColumn = numColumn(named: "Forks", path: \.repository.forks)
-        let stateColumn = ostrColumn(named: "State", path: \.release.assets.first?.state)
-        let downloadsColumn = onumColumn(named: "Downloads", path: \.release.assets.first?.download_count)
+            let createdColumn = dateColumn(named: "Created", path: \.release.created_at)
+            let publishedColumn = dateColumn(named: "Published", path: \.release.published_at)
+            let starsColumn = numColumn(named: "Stars", path: \.repository.stargazers_count)
+            let issuesColumn = numColumn(named: "Issues", path: \.repository.open_issues_count)
+            let forksColumn = numColumn(named: "Forks", path: \.repository.forks)
+            let stateColumn = ostrColumn(named: "State", path: \.release.assets.first?.state)
+            let downloadsColumn = onumColumn(named: "Downloads", path: \.release.assets.first?.download_count)
 
-        let sizeColumn = TableColumn("Size", value: \TableRowValue.release.assets.first?.size, comparator: OptionalNumericComparator()) { item in
-            Text(item.release.assets.first?.size.localizedByteCount(countStyle: .file) ?? "N/A")
-        }
-
-        let draftColumn = boolColumn(named: "Draft", path: \.release.draft)
-        let preReleaseColumn = boolColumn(named: "Pre-Release", path: \.release.prerelease)
-
-        let downloadColumn = TableColumn("Download", value: \TableRowValue.release.assets.first?.browser_download_url.lastPathComponent, comparator: StringComparator()) { item in
-            //Text(item.assets.first?.state ?? "N/A")
-            //Toggle(isOn: .constant(item.draft)) { EmptyView () }
-            if let asset = item.release.assets.first {
-                Link("Download \(asset.size.localizedByteCount(countStyle: .file))", destination: asset.browser_download_url)
+            let sizeColumn = TableColumn("Size", value: \TableRowValue.release.assets.first?.size, comparator: OptionalNumericComparator()) { item in
+                Text(item.release.assets.first?.size.localizedByteCount(countStyle: .file) ?? "N/A")
             }
-        }
-        let tagColumn = TableColumn("Tag", value: \TableRowValue.release.tag_name)
-        let infoColumn = TableColumn("Info", value: \TableRowValue.release.body) { item in
-            Text((try? item.release.body.atx()) ?? "No info")
-        }
 
-        let columnGroup1 = Group {
-            imageColumn.width(50)
-            nameColumn
-            sizeColumn
-            downloadColumn
-            downloadsColumn
-            createdColumn
-            publishedColumn
-        }
+            let draftColumn = boolColumn(named: "Draft", path: \.release.draft)
+            let preReleaseColumn = boolColumn(named: "Pre-Release", path: \.release.prerelease)
 
-        let columnGroup2 = Group {
-            starsColumn
-            issuesColumn
-            forksColumn
-            stateColumn
-        }
+            let downloadColumn = TableColumn("Download", value: \TableRowValue.release.assets.first?.browser_download_url.lastPathComponent, comparator: StringComparator()) { item in
+                //Text(item.assets.first?.state ?? "N/A")
+                //Toggle(isOn: .constant(item.draft)) { EmptyView () }
+                if let asset = item.release.assets.first {
+                    Link("Download \(asset.size.localizedByteCount(countStyle: .file))", destination: asset.browser_download_url)
+                }
+            }
+            let tagColumn = TableColumn("Tag", value: \TableRowValue.release.tag_name)
+            let infoColumn = TableColumn("Info", value: \TableRowValue.release.body) { item in
+                Text((try? item.release.body.atx()) ?? "No info")
+            }
 
-        let columnGroup3 = Group {
-            draftColumn
-            preReleaseColumn
-            tagColumn
-            infoColumn
-        }
+            let columnGroup1 = Group {
+                //imageColumn.width(50)
+                nameColumn
+                sizeColumn
+                downloadColumn
+                downloadsColumn
+                createdColumn
+                publishedColumn
+            }
 
-        let tableColumnBody = Group {
-            // these need to be broken up to help the typechecker solve it in a reasonable amount of time
-            columnGroup1
-            columnGroup2
-            columnGroup3
-        }
+            let columnGroup2 = Group {
+                starsColumn
+                issuesColumn
+                forksColumn
+                stateColumn
+            }
 
-        return tableColumnBody
-    }
+            let columnGroup3 = Group {
+                draftColumn
+                preReleaseColumn
+                tagColumn
+                infoColumn
+            }
 
-    var tableView: Table<TableRowValue, Self, Self> {
-        Table(selection: $selection, sortOrder: $sortOrder, columns: { self }, rows: { self })
+            let tableColumnBody = Group {
+                // these need to be broken up to help the typechecker solve it in a reasonable amount of time
+                columnGroup1
+                columnGroup2
+                columnGroup3
+            }
+
+            tableColumnBody
+        }, rows: { self })
     }
 
     var table: some View {
-        //print(wip(Date()), "table view body")
         return tableView
             .tableStyle(.inset(alternatesRowBackgrounds: false))
             .font(Font.body.monospacedDigit())

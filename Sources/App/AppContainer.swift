@@ -2,7 +2,9 @@ import Swift
 import SwiftUI
 import FairApp
 
-@available(*, deprecated, message: "work in progress")
+/// Work-in-Progress marker
+///
+/// - TODO: @available(*, deprecated, message: "work in progress")
 func wip<T>(_ value: T) -> T { value }
 
 public extension Bundle {
@@ -61,6 +63,7 @@ open class Store: AppStoreObject {
 struct AppFairCommands: Commands {
     @FocusedBinding(\.selection) private var selection: Selection??
     @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
+    var store: Store
 
     var body: some Commands {
 
@@ -80,6 +83,11 @@ struct AppFairCommands: Commands {
 
 //        CommandGroup(before: .newItem) {
 //            ShareAppButton()
+//        }
+
+//        CommandGroup(after: .sidebar) {
+//            CommandGroup(before: .newItem) {
+//            }
 //        }
 
         CommandMenu("Fair") {
@@ -165,23 +173,23 @@ public extension Store {
     }
 
     func share(_ item: Item) {
-        print("### ", #function)
+        print("### ", wip(#function))
     }
 
     func markFavorite(_ item: Item) {
-        print("### ", #function)
+        print("### ", wip(#function))
     }
 
     func deleteItem(_ item: Item) {
-        print("### ", #function)
+        print("### ", wip(#function))
     }
 
     func submitCurrentSearchQuery() {
-        print("### ", #function)
+        print("### ", wip(#function))
     }
 
     func openFilters() {
-        print("### ", #function)
+        print("### ", wip(#function))
     }
 
     func appCount(_ grouping: AppCategory.Grouping) -> Text? {
@@ -196,17 +204,21 @@ public extension Store {
         nil
     }
 
-    enum SidebarItem {
+    enum SidebarItem : Identifiable, CaseIterable {
         case popular
         case favorites
         case recent
 
         case category(_ group: AppCategory.Grouping)
 
-        case search(_ term: String)
+        //case search(_ term: String)
+
+        public static var allCases: [Store.SidebarItem] {
+            [.popular, .favorites, .recent] + AppCategory.Grouping.allCases.map(Store.SidebarItem.category)
+        }
 
         /// The persistent identifier for this grouping
-        var id: String {
+        public var id: String {
             switch self {
             case .popular:
                 return "popular"
@@ -216,8 +228,8 @@ public extension Store {
                 return "recent"
             case .category(let grouping):
                 return "category:" + grouping.rawValue
-            case .search(let term):
-                return "search:" + term
+//            case .search(let term):
+//                return "search:" + term
             }
         }
 
@@ -231,8 +243,8 @@ public extension Store {
                 return TintedLabel("Recent", systemName: "flag", tint: Color.purple) // clock or bolt?
             case .category(let grouping):
                 return grouping.label
-            case .search(let term):
-                return TintedLabel("Search: \(term)", systemName: "magnifyingglass", tint: Color.gray)
+//            case .search(let term):
+//                return TintedLabel("Search: \(term)", systemName: "magnifyingglass", tint: Color.gray)
             }
         }
     }
@@ -335,12 +347,28 @@ public struct AppSettingsView: View {
 @available(macOS 12.0, iOS 15.0, *)
 public struct NavigationRootView : View {
     @EnvironmentObject var store: Store
+    @SceneStorage("outlineSelection") var outlineSelectionID: Store.SidebarItem.ID?
+    @AppStorage("defaultOutlineSelection") var defaultOutlineSelectionID: Store.SidebarItem.ID?
 
     public var body: some View {
         NavigationView {
-            SidebarView().frame(minWidth: 160) // .controlSize(.large)
-            AppsListView()
+            SidebarView(selection: selection)
+                .frame(minWidth: 180)
+                //.controlSize(.large)
+            AppsListView(item: selectedItem)
             //DetailView()
+        }
+    }
+
+    private var selection: Binding<Store.SidebarItem.ID?> {
+        Binding(get: { outlineSelectionID ?? defaultOutlineSelectionID }, set: { outlineSelectionID = $0 })
+    }
+
+    private var selectedItem: Binding<Store.SidebarItem?> {
+        Binding {
+            Store.SidebarItem.allCases.first(where: { $0.id == selection.wrappedValue })
+        } set: { newValue in
+
         }
     }
 }
@@ -533,40 +561,22 @@ public extension AppCategory {
 @available(macOS 12.0, iOS 15.0, *)
 struct SidebarView: View {
     @EnvironmentObject var store: Store
-
-    func shortCut(for grouping: AppCategory.Grouping, offset: Int) -> KeyboardShortcut {
-        let index = (AppCategory.Grouping.allCases.enumerated().first(where: { $0.element == grouping })?.offset ?? 0) + offset
-        if index > 9 || index < 0 {
-            return KeyboardShortcut("0") // otherwise: Fatal error: Can't form a Character from a String containing more than one extended grapheme cluster
-        } else {
-            let key = Character("\(index)") // the first three are taken by favorites
-            return KeyboardShortcut(KeyEquivalent(key))
-        }
-    }
+    @Binding var selection: Store.SidebarItem.ID?
 
     var body: some View {
-        List {
-            Section("Apps") {
-                item(.popular).keyboardShortcut("1")
-                item(.favorites).keyboardShortcut("2")
-                item(.recent).keyboardShortcut("3")
-            }
-
-            Section("Categories") {
-                ForEach(AppCategory.Grouping.allCases, id: \.self) { grouping in
-                    item(.category(grouping)).keyboardShortcut(shortCut(for: grouping, offset: 4))
+        List(selection: $selection) {
+            Section("Catalog") {
+                ForEach([Store.SidebarItem.popular, .favorites, .recent]) { item in
+                    item.label
                 }
             }
 
-//            Section("Searches") {
-//                item(.search("Search 1"))
-//                item(.search("Search 2"))
-//                item(.search("Search 3"))
-//            }
+            Section("Categories") {
+                ForEach(AppCategory.Grouping.allCases.map(Store.SidebarItem.category)) { category in
+                    category.label
+                }
+            }
         }
-        //.symbolVariant(.none)
-        //.symbolRenderingMode(.hierarchical)
-        //.symbolVariant(.circle) // note that these can be stacked
         .symbolVariant(.fill)
         .symbolRenderingMode(.multicolor)
         .listStyle(.automatic)
@@ -584,10 +594,8 @@ struct SidebarView: View {
     }
 
     func item(_ item: Store.SidebarItem) -> some View {
-        NavigationLink(destination: AppsListView(item: item)) {
-            item.label
-                .badge(store.badgeCount(for: item))
-        }
+        item.label.id(item.id)
+            //.badge(store.badgeCount(for: item))
     }
 
     func tool(_ item: Store.SidebarItem) -> some CustomizableToolbarContent {
@@ -603,7 +611,7 @@ struct SidebarView: View {
     }
 
     func selectItem(_ item: Store.SidebarItem) {
-        print("### SELECTED", item)
+        print(wip("### SELECTED"), item)
     }
 }
 
@@ -737,6 +745,7 @@ extension AppsListView.ViewMode {
 @available(macOS 12.0, iOS 15.0, *)
 struct AppsListView: View {
     @EnvironmentObject var store: Store
+    @Binding var item: Store.SidebarItem?
     @SceneStorage("viewMode") private var mode: ViewMode = .table
 
     /// Whether to display the items as a table or gallery
@@ -746,17 +755,15 @@ struct AppsListView: View {
         case gallery
     }
 
-    var item: Store.SidebarItem? = nil
 
     var body: some View {
         Group {
             #if os(macOS)
             if mode == .table {
                 switch item {
-                case .recent:
-                    ActionsTableView()
-                default:
-                    ReleasesTableView()
+                case .recent: ActionsTableView()
+                case .popular: SampleTableView()
+                default: ReleasesTableView()
                 }
             } else {
                 SampleImagesListView()
@@ -773,6 +780,79 @@ struct AppsListView: View {
             }
         }
         .navigationTitle(item?.label.title ?? "Apps")
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, *)
+struct SampleTableView : View {
+    //@Binding var document: DocDemo2Document
+    @State var items = (1...100).map({ _ in Item() })
+    @State var selection: Set<Item.ID> = []
+    @State var sortOrder: [KeyPathComparator<Item>] = []
+
+    struct Item : Hashable, Identifiable {
+        let id: UUID = UUID()
+        let id2: UUID = UUID()
+        let id3: UUID = UUID()
+        let id4: UUID = UUID()
+        let id5: UUID = UUID()
+        let id6: UUID = UUID()
+        let id7: UUID = UUID()
+        let id8: UUID = UUID()
+        let id9: UUID = UUID()
+    }
+
+
+    var body: some View {
+        //print(Date(), "table body")
+        return Table(selection: $selection, sortOrder: $sortOrder) {
+//            Group {
+                TableColumn("ID", sortUsing: KeyPathComparator(\.id.uuidString)) { item in
+                    Text(item.id.uuidString)
+                }
+                TableColumn("ID2", sortUsing: KeyPathComparator(\.id2.uuidString)) { item in
+                    Text(item.id2.uuidString)
+                }
+//                TableColumn("ID3", sortUsing: KeyPathComparator(\.id3.uuidString)) { item in
+//                    Text(item.id3.uuidString)
+//                }
+//                TableColumn("ID4", sortUsing: KeyPathComparator(\.id4.uuidString)) { item in
+//                    Text(item.id4.uuidString)
+//                }
+//            }
+
+//            Group {
+//                TableColumn("ID5", sortUsing: KeyPathComparator(\.id5.uuidString)) { item in
+//                    Text(item.id5.uuidString)
+//                }
+//                TableColumn("ID6", sortUsing: KeyPathComparator(\.id6.uuidString)) { item in
+//                    Text(item.id6.uuidString)
+//                }
+//                TableColumn("ID7", sortUsing: KeyPathComparator(\.id7.uuidString)) { item in
+//                    Text(item.id7.uuidString)
+//                }
+//                TableColumn("ID8", sortUsing: KeyPathComparator(\.id8.uuidString)) { item in
+//                    Text(item.id8.uuidString)
+//                }
+//            }
+
+
+
+//            TableColumn("ID", sortUsing: KeyPathComparator(\.id.uuidString)) { item in
+//                Text(item.id.uuidString)
+//            }
+//            TableColumn("ID", sortUsing: KeyPathComparator(\.id.uuidString)) { item in
+//                Text(item.id.uuidString)
+//            }
+//            TableColumn("ID", sortUsing: KeyPathComparator(\.id.uuidString)) { item in
+//                Text(item.id.uuidString)
+//            }
+        } rows: {
+            ForEach(items.sorted(using: sortOrder)) { item in
+                TableRow(item)
+                   // .itemProvider { item.itemProvider }
+            }
+        }
     }
 }
 

@@ -21,9 +21,8 @@ import FairCore
 final class AppTests: XCTestCase {
     func testAppScene() throws {
         let store = AppContainer.AppStore()
-        let container = AppContainer()
-        let scene = container.rootScene(store: store)
-        let settings = container.settingsView(store: store)
+        let scene = AppContainer.rootScene(store: store)
+        let settings = AppContainer.settingsView(store: store)
         let (_, _) = (scene, settings)
     }
 
