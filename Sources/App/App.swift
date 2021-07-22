@@ -15,8 +15,7 @@
 import FairApp
 
 @available(macOS 12.0, iOS 15.0, *)
-@main public struct AppContainer : FairApp.FairContainer {
-    public init() { }
+@main public enum AppContainer : FairApp.FairContainer {
     public static func main() throws { try launch() }
 }
 
@@ -25,18 +24,18 @@ import FairApp
 @available(macOS 12.0, iOS 15.0, *)
 public extension AppContainer {
     /// The root scene for this application
-    func rootScene(store: Store) -> some Scene {
+    static func rootScene(store: Store) -> some Scene {
         WindowGroup {
             NavigationRootView().environmentObject(store)
         }
         .commands {
             SidebarCommands()
-            AppFairCommands()
+            AppFairCommands(store: store)
             ToolbarCommands()
         }
     }
 
-    func settingsView(store: Store) -> some View {
+    static func settingsView(store: Store) -> some View {
         AppSettingsView().environmentObject(store)
     }
 }
