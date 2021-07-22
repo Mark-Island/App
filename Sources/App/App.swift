@@ -39,3 +39,8 @@ public extension AppContainer {
         AppSettingsView().environmentObject(store)
     }
 }
+
+/// Work-in-Progress marker
+///
+/// - TODO: @available(*, deprecated, message: "work in progress")
+func wip<T>(_ value: T) -> T { value }

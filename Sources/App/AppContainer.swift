@@ -2,11 +2,6 @@ import Swift
 import SwiftUI
 import FairApp
 
-/// Work-in-Progress marker
-///
-/// - TODO: @available(*, deprecated, message: "work in progress")
-func wip<T>(_ value: T) -> T { value }
-
 public extension Bundle {
     /// The URL for the App's resource bundle
     static var appBundleURL: URL! {
@@ -34,7 +29,7 @@ extension AppRelease {
         let orgname = repository.owner.login
         let relname = release.name
         if orgname != relname {
-            print("internal error: organization name:", orgname, "mismatched release name:", relname)
+            dbg("internal error: organization name:", orgname, "mismatched release name:", relname)
             return nil
         }
 
@@ -55,6 +50,9 @@ open class Store: AppStoreObject {
     @AppStorage("hubToken") public var hubToken = ""
     @AppStorage("hubOrg") public var hubOrg = "appfair"
     @AppStorage("hubRepo") public var hubRepo = "App"
+
+    @AppStorage("releaseTableColumns") var releaseTableColumns = ReleasesTableView.Columnator.defaultColumns
+    @AppStorage("actionsTableColumns") var actionsTableColumns = ActionsTableView.Columnator.defaultColumns
 
     @Published public var errors: [(AppFailure?, Error)] = []
 }
@@ -93,14 +91,14 @@ struct AppFairCommands: Commands {
         CommandMenu("Fair") {
             Button("Reload Apps") {
                 guard let cmd = reloadCommand else {
-                    print("no reload command")
+                    dbg("no reload command")
                     return
                 }
                 let start = CFAbsoluteTimeGetCurrent()
                 Task {
                     await cmd()
                     let end = CFAbsoluteTimeGetCurrent()
-                    print("reloaded:", end - start)
+                    dbg("reloaded:", end - start)
                 }
             }
             .keyboardShortcut("R")
@@ -145,7 +143,7 @@ public extension Store {
     }
 
     func activateFind() {
-        print("### ", #function) // TODO: is there a way to focus the search field?
+        dbg("### ", #function) // TODO: is there a way to focus the search field?
     }
 
     func fetchReleases(cache: URLRequest.CachePolicy? = nil) async throws -> [FairHub.ReleaseInfo] {
@@ -173,23 +171,23 @@ public extension Store {
     }
 
     func share(_ item: Item) {
-        print("### ", wip(#function))
+        dbg("### ", wip(#function))
     }
 
     func markFavorite(_ item: Item) {
-        print("### ", wip(#function))
+        dbg("### ", wip(#function))
     }
 
     func deleteItem(_ item: Item) {
-        print("### ", wip(#function))
+        dbg("### ", wip(#function))
     }
 
     func submitCurrentSearchQuery() {
-        print("### ", wip(#function))
+        dbg("### ", wip(#function))
     }
 
     func openFilters() {
-        print("### ", wip(#function))
+        dbg("### ", wip(#function))
     }
 
     func appCount(_ grouping: AppCategory.Grouping) -> Text? {
@@ -611,7 +609,7 @@ struct SidebarView: View {
     }
 
     func selectItem(_ item: Store.SidebarItem) {
-        print(wip("### SELECTED"), item)
+        dbg(wip("### SELECTED"), item)
     }
 }
 
@@ -804,7 +802,7 @@ struct SampleTableView : View {
 
 
     var body: some View {
-        //print(Date(), "table body")
+        //dbg("table body")
         return Table(selection: $selection, sortOrder: $sortOrder) {
 //            Group {
                 TableColumn("ID", sortUsing: KeyPathComparator(\.id.uuidString)) { item in
