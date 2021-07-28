@@ -14,10 +14,8 @@
  */
 import FairApp
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-@main public struct AppContainer : FairApp.FairContainer {
-    @ObservedObject public var appEnv = AppEnv()
-    public init() { }
+@available(macOS 12.0, iOS 15.0, *)
+@main public enum AppContainer : FairApp.FairContainer {
     public static func main() throws { try launch() }
 }
 
@@ -25,42 +23,42 @@ import FairApp
 
 // Define your app in an extension of `AppContainer`
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 public extension AppContainer {
     /// The body of your scene is provided by `AppContainer.scene`
-    @SceneBuilder var rootScene: some SwiftUI.Scene {
+    @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
         WindowGroup {
-            ContentView()
+            ContentView().environmentObject(store)
         }
     }
 
     /// The app-wide settings view
-    @ViewBuilder var settingsView : some SwiftUI.View {
-        AppSettingsView().environmentObject(appEnv)
+    @ViewBuilder static func settingsView(store: Store) -> some SwiftUI.View {
+        AppSettingsView().environmentObject(store)
     }
 }
 
 /// The shared app environment
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-@MainActor public final class AppEnv: AppEnvironmentObject {
+@available(macOS 12.0, iOS 15.0, *)
+@MainActor public final class Store: AppStoreObject {
     @AppStorage("someToggle") public var someToggle = false
 }
 
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 public struct ContentView: View {
-    @EnvironmentObject var appEnv: AppEnv
+    @EnvironmentObject var store: Store
 
     public var body: some View {
-        Text("Welcome to Fair Ground!")
+        Text("MarkDown Editor View")
             .font(.largeTitle)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 public struct AppSettingsView : View {
-    @EnvironmentObject var appEnv: AppEnv
+    @EnvironmentObject var store: Store
 
     public var body: some View {
         EmptyView()
