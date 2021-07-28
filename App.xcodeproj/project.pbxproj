@@ -14,6 +14,7 @@
 /* Begin PBXFileReference section */
 		4924977926A1B10600260999 /* App.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = App.xcassets; sourceTree = "<group>"; };
 		49555415268931C1003F1B5B /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4966E9C026A9DB9500301C7A /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -38,6 +39,7 @@
 		4955540C268931C1003F1B5B = {
 			isa = PBXGroup;
 			children = (
+				4966E9C026A9DB9500301C7A /* App.entitlements */,
 				4924977926A1B10600260999 /* App.xcassets */,
 				49555416268931C1003F1B5B /* Products */,
 				49372E752689388E00100F18 /* Frameworks */,
