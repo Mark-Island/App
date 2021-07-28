@@ -261,7 +261,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				IOS_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.App;
 				PRODUCT_NAME = "$(FAIRAPP_PRODUCT_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -286,7 +287,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				IOS_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.App;
 				PRODUCT_NAME = "$(FAIRAPP_PRODUCT_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
