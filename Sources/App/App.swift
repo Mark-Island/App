@@ -13,7 +13,6 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import FairApp
-import SwiftUI
 
 @available(macOS 12.0, iOS 15.0, *)
 @main public enum AppContainer : FairApp.FairContainer {
