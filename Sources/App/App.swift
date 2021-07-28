@@ -13,6 +13,7 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import FairApp
+import SwiftUI
 
 @available(macOS 12.0, iOS 15.0, *)
 @main public enum AppContainer : FairApp.FairContainer {
@@ -29,6 +30,9 @@ public extension AppContainer {
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
         WindowGroup {
             ContentView().environmentObject(store)
+        }
+        .commands {
+            TextEditingCommands()
         }
     }
 
@@ -48,11 +52,46 @@ public extension AppContainer {
 @available(macOS 12.0, iOS 15.0, *)
 public struct ContentView: View {
     @EnvironmentObject var store: Store
+    @State var md = ""
 
     public var body: some View {
-        Text("MarkDown Editor View")
-            .font(.largeTitle)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        HSplitView {
+            ZStack {
+                TextEditor(text: $md)
+                if md.isEmpty {
+                    Label("Enter Markdown Here", systemImage: "arrow.up.circle.fill")
+                        .font(.title)
+                }
+            }
+
+            ZStack {
+                ScrollView {
+                    Text(parse())
+                        .frame(maxWidth: .infinity)
+                }
+                if md.isEmpty {
+                    Text("Markdown Rendered Here")
+                        .font(.title)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+        }
+        .font(Font.system(size: 18, weight: .thin, design: .monospaced))
+    }
+
+    func parse() -> AttributedString {
+        let kp = \AttributeScopes.appKit
+        let options = AttributedString.MarkdownParsingOptions(allowsExtendedAttributes: true, interpretedSyntax: .inlineOnlyPreservingWhitespace, failurePolicy: .returnPartiallyParsedIfPossible, languageCode: nil)
+        let baseURL: URL? = nil
+
+        let txt: AttributedString
+        do {
+            txt = try AttributedString(markdown: md, including: kp, options: options, baseURL: baseURL)
+        } catch {
+            txt = AttributedString("Error: \(error)")
+        }
+
+        return txt
     }
 }
 
