@@ -50,7 +50,7 @@ public struct ContentView: View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        Text("Welcome to Fair Ground!")
+        Text("MarkDown Editor View")
             .font(.largeTitle)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
