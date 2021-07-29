@@ -81,12 +81,20 @@ jobs:
           xcrun swift run -- fairtool validate --project . --hub github.com 
           #xcrun swift run -- fairtool edit --project . --hub github.com --bundle-id "${{ env.BUNDLE_ID }}" --display-name "${{ env.PRODUCT_NAME }}"
 
+      - name: "Prepare Staging"
+        run: |
+          rm -rf "staging/"
+          mkdir "staging/"
+
       - name: Update Info
         run: |
           /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string" App.plist || true
           /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier '${{ env.BUNDLE_ID }}'" App.plist
           /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string" App.plist || true
           /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName '${{ env.PRODUCT_NAME }}'" App.plist
+
+      - name: Stage Icon
+        run: cp Assets.xcassets/AppIcon.appiconset/Icon.png staging/"${{ env.APP_ARTIFACT }}.png"
 
       - name: Build Archive
         run: |
@@ -109,8 +117,6 @@ jobs:
 
       - name: "Export Archive"
         run: |
-          rm -rf "staging/"
-          mkdir "staging/"
           echo '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>mac-application</string><key>signingStyle</key><string>automatic</string></dict></plist>' > "staging/exportOptions.plist"
           xcodebuild \
             -verbose \
@@ -135,15 +141,19 @@ jobs:
             
           unzip -t "staging/${{ env.APP_ARTIFACT }}.zip"
 
-      - uses: actions/upload-artifact@v2
+      - name: "Upload Build Artifacts"
+        uses: actions/upload-artifact@v2
         with:
           path: "staging/${{ env.APP_ARTIFACT }}.zip"
 
-      - uses: "marvinpinto/action-automatic-releases@latest"
+      - name: "Create App Release"
+        uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           draft: false
           prerelease: true
           automatic_release_tag: "${{ env.APP_ARTIFACT }}"
-          files: staging/${{ env.APP_ARTIFACT }}.zip
+          files: |
+            staging/${{ env.APP_ARTIFACT }}.zip
+            staging/${{ env.APP_ARTIFACT }}.png
 

@@ -55,9 +55,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		49555414268931C1003F1B5B /* App */ = {
+		49555414268931C1003F1B5B /* Application */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "App" */;
+			buildConfigurationList = 49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "Application" */;
 			buildPhases = (
 				49555411268931C1003F1B5B /* Sources */,
 				49555412268931C1003F1B5B /* Frameworks */,
@@ -102,7 +102,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				49555414268931C1003F1B5B /* App */,
+				49555414268931C1003F1B5B /* Application */,
 			);
 		};
 /* End PBXProject section */
@@ -247,22 +247,23 @@
 		49555426268931C4003F1B5B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "App.entitlements";
+				CODE_SIGN_ENTITLEMENTS = App.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				FAIRAPP_PRODUCT_NAME = "App";
-				INFOPLIST_FILE = "App.plist";
+				FAIRAPP_PRODUCT_NAME = App;
+				INFOPLIST_FILE = App.plist;
+				IOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				IOS_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.App;
 				PRODUCT_NAME = "$(FAIRAPP_PRODUCT_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -273,22 +274,23 @@
 		49555427268931C4003F1B5B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "App.entitlements";
+				CODE_SIGN_ENTITLEMENTS = App.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				FAIRAPP_PRODUCT_NAME = "App";
-				INFOPLIST_FILE = "App.plist";
+				FAIRAPP_PRODUCT_NAME = App;
+				INFOPLIST_FILE = App.plist;
+				IOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				IOS_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.App;
 				PRODUCT_NAME = "$(FAIRAPP_PRODUCT_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -308,7 +310,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "App" */ = {
+		49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "Application" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				49555426268931C4003F1B5B /* Debug */,
