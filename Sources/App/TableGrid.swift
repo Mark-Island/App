@@ -307,7 +307,8 @@ struct ReleasesTableView : View, ItemTableView {
     }
 
     func columnVisible(element: Columnator.Element) -> Bool {
-        store.releaseTableColumns.contains(element)
+        wip(true)
+        //store.releaseTableColumns.contains(element)
     }
 
     var body: some View {
