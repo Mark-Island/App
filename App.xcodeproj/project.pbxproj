@@ -57,9 +57,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		49555414268931C1003F1B5B /* App Fair.app */ = {
+		49555414268931C1003F1B5B /* Application */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "App Fair.app" */;
+			buildConfigurationList = 49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "Application" */;
 			buildPhases = (
 				49555411268931C1003F1B5B /* Sources */,
 				49555412268931C1003F1B5B /* Frameworks */,
@@ -69,7 +69,7 @@
 			);
 			dependencies = (
 			);
-			name = "App Fair.app";
+			name = Application;
 			packageProductDependencies = (
 				498DD183268CDB4600B79D43 /* App */,
 			);
@@ -104,7 +104,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				49555414268931C1003F1B5B /* App Fair.app */,
+				49555414268931C1003F1B5B /* Application */,
 			);
 		};
 /* End PBXProject section */
@@ -310,7 +310,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "App Fair.app" */ = {
+		49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "Application" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				49555426268931C4003F1B5B /* Debug */,
