@@ -434,3 +434,4 @@ struct ReleasesTableView : View, ItemTableView {
 }
 
 #endif // os(macOS)
+
