@@ -47,6 +47,11 @@ public extension AppContainer {
     @AppStorage("someToggle") public var someToggle = false
 }
 
+#if canImport(AppKit)
+typealias SplitView = HSplitView
+#else
+typealias SplitView = HStack
+#endif
 
 @available(macOS 12.0, iOS 15.0, *)
 public struct ContentView: View {
@@ -54,7 +59,7 @@ public struct ContentView: View {
     @State var md = ""
 
     public var body: some View {
-        HSplitView {
+        SplitView {
             ZStack {
                 TextEditor(text: $md)
                 if md.isEmpty {
@@ -79,7 +84,7 @@ public struct ContentView: View {
     }
 
     func parse() -> AttributedString {
-        let kp = \AttributeScopes.appKit
+        let kp = \AttributeScopes.swiftUI
         let options = AttributedString.MarkdownParsingOptions(allowsExtendedAttributes: true, interpretedSyntax: .inlineOnlyPreservingWhitespace, failurePolicy: .returnPartiallyParsedIfPossible, languageCode: nil)
         let baseURL: URL? = nil
 
