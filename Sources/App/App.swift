@@ -24,20 +24,12 @@ import FairApp
 @available(macOS 12.0, iOS 15.0, *)
 public extension AppContainer {
 
-    @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
-    var settingsView : some View {
-        AppSettingsView().environmentObject(appEnv)
-    }
-
-    var rootScene: some Scene {
-        WindowGroup {
-            NavigationRootView()
-                .environmentObject(store)
-                .task(appEnv.windowAppeared)
     /// The root scene for this application
     static func rootScene(store: Store) -> some Scene {
         WindowGroup {
-            NavigationRootView().environmentObject(store)
+            NavigationRootView()
+                .environmentObject(store)
+                .task(store.windowAppeared)
         }
         .commands {
             SidebarCommands()
@@ -45,14 +37,13 @@ public extension AppContainer {
             ToolbarCommands()
         }
     }
-}
 
-public extension Bundle {
-    /// The URL for the App's resource bundle
-    static var appBundleURL: URL! {
-        Bundle.module.url(forResource: "Bundle", withExtension: nil)
+    /// The app-wide settings view
+    @ViewBuilder static func settingsView(store: Store) -> some SwiftUI.View {
+        AppSettingsView().environmentObject(store)
     }
 }
+
 
 /// An app that is available to download.
 ///
@@ -88,9 +79,12 @@ enum Selection {
     case run(FairHub.WorkflowRun)
 }
 
+@available(macOS 12.0, iOS 15.0, *)
+public typealias Store = AppEnv
+
 /// The manager for the current app fair
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-@MainActor public final class AppEnv: AppEnvironmentObject {
+@available(macOS 12.0, iOS 15.0, *)
+@MainActor public final class AppEnv: AppStoreObject {
     @AppStorage("hubHost") public var hubHost = "https://api.github.com"
     @AppStorage("hubToken") public var hubToken = ""
     @AppStorage("hubOrg") public var hubOrg = "appfair"
@@ -99,10 +93,11 @@ enum Selection {
     @Published public var errors: [(AppFailure?, Error)] = []
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct AppFairCommands: Commands {
     @FocusedBinding(\.selection) private var selection: Selection??
     @FocusedBinding(\.reloadCommand) private var reloadCommand: (() async -> ())?
+    var store: Store
 
     var body: some Commands {
 
@@ -154,7 +149,7 @@ public enum AppFailure {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 public extension AppEnv {
     typealias Item = URL
 
@@ -280,7 +275,7 @@ public extension AppEnv {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct GeneralSettingsView: View {
     @AppStorage("showPreview") private var showPreview = true
     @AppStorage("fontSize") private var fontSize = 12.0
@@ -296,7 +291,7 @@ struct GeneralSettingsView: View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct AdvancedSettingsView: View {
     @EnvironmentObject var appEnv: AppEnv
 
@@ -336,7 +331,7 @@ struct AdvancedSettingsView: View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 public struct HelpButton : View {
     let url: String
     @Environment(\.openURL) var openURL
@@ -353,19 +348,9 @@ public struct HelpButton : View {
         .buttonStyle(.bordered)
     }
 
-    /// The app-wide settings view
-    @ViewBuilder static func settingsView(store: Store) -> some SwiftUI.View {
-        AppSettingsView().environmentObject(store)
-    }
 }
 
-/// The shared app environment
 @available(macOS 12.0, iOS 15.0, *)
-@MainActor public final class Store: AppStoreObject {
-    @AppStorage("someToggle") public var someToggle = false
-}
-
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 public struct AppSettingsView: View {
     public enum Tabs: Hashable {
         case general, advanced
@@ -385,7 +370,7 @@ public struct AppSettingsView: View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 public struct NavigationRootView : View {
     @EnvironmentObject var appEnv: AppEnv
 
@@ -398,7 +383,7 @@ public struct NavigationRootView : View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 public struct DetailView : View {
     @FocusedBinding(\.selection) private var selection: Selection??
 
@@ -420,7 +405,7 @@ public struct DetailView : View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct AppInfoView : Equatable, View {
     let app: AppRelease
 
@@ -441,7 +426,7 @@ struct AppInfoView : Equatable, View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct RunInfoView : Equatable, View {
     let run: FairHub.WorkflowRun
 
@@ -455,7 +440,7 @@ struct RunInfoView : Equatable, View {
 }
 
 /// A label that tints its image
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 public struct TintedLabel : View {
     public let title: LocalizedStringKey
     public let systemName: StaticString
@@ -503,7 +488,7 @@ public extension AppCategory {
             AppCategory.allCases.filter({ $0.groupings.contains(self) })
         }
 
-        @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+        @available(macOS 12.0, iOS 15.0, *)
         public var label: TintedLabel {
             switch self {
             case .create:
@@ -577,7 +562,7 @@ public extension AppCategory {
 
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct SidebarView: View {
     @EnvironmentObject var appEnv: AppEnv
 
@@ -751,7 +736,7 @@ extension FocusedValues {
 }
 
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct DisplayModePicker: View {
     @Binding var mode: AppsListView.ViewMode
 
@@ -765,7 +750,7 @@ struct DisplayModePicker: View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 extension AppsListView.ViewMode {
     var labelContent: (name: LocalizedStringKey, systemImage: String) {
         switch self {
@@ -781,7 +766,7 @@ extension AppsListView.ViewMode {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct AppsListView: View {
     @EnvironmentObject var appEnv: AppEnv
     @SceneStorage("viewMode") private var mode: ViewMode = .table
@@ -824,7 +809,7 @@ struct AppsListView: View {
 }
 
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+@available(macOS 12.0, iOS 15.0, *)
 struct SampleImagesListView: View {
     /// TODO: also try https://unsplash.com
     @State var allImageURLs = (1000...1100).compactMap({ URL(string: "https://picsum.photos/id/\($0)") })
@@ -872,14 +857,25 @@ struct SampleImagesListView: View {
     }
 }
 
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-struct MessageDetailsView: View {
-    let message: String
 
-    static func settingsView(store: Store) -> some View {
-        AppSettingsView().environmentObject(store)
+@available(macOS 12.0, iOS 15.0, *)
+struct ImageDetailsView: View {
+    let url: URL
+
+    var body: some View {
+        URLImage(url: url.picsum(width: 1000, height: 1000), resizable: ContentMode.fill)
     }
 }
+
+
+//@available(macOS 12.0, iOS 15.0, *)
+//struct MessageDetailsView: View {
+//    let message: String
+//
+//    static func settingsView(store: Store) -> some View {
+//        AppSettingsView().environmentObject(store)
+//    }
+//}
 
 /// Work-in-Progress marker
 ///

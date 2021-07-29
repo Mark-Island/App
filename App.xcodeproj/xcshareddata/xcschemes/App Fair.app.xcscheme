@@ -16,7 +16,7 @@
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "49555414268931C1003F1B5B"
                BuildableName = "App.app"
-               BlueprintName = "Application"
+               BlueprintName = "App Fair.app"
                ReferencedContainer = "container:App.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -46,7 +46,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "49555414268931C1003F1B5B"
             BuildableName = "App.app"
-            BlueprintName = "Application"
+            BlueprintName = "App Fair.app"
             ReferencedContainer = "container:App.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -63,7 +63,7 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "49555414268931C1003F1B5B"
             BuildableName = "App.app"
-            BlueprintName = "Application"
+            BlueprintName = "App Fair.app"
             ReferencedContainer = "container:App.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
