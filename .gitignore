@@ -3,6 +3,7 @@
 #*.xcodeproj
 .DS_Store
 .build
+staging/
 xcuserdata/
 build/
 DerivedData/
