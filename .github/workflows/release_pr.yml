@@ -129,8 +129,8 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           path: |
-            "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive"
-            "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive"
+            staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive
+            staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive
 
       - name: "Export Archive"
         run: |
