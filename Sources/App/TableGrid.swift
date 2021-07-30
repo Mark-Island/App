@@ -175,6 +175,24 @@ struct OptionalNumericComparator : SortComparator {
 //}
 
 
+/// Displays the icon for the repository
+struct RepoIconView : Equatable, View {
+    let owner: FairHub.RepositoryOwner
+
+    var body: some View {
+        // https://github.com/appfair/App/releases/download/Mark-Island/Mark-Island.png
+
+//        if let avatar_url = owner.avatar_url, let url = URL(string: avatar_url) {
+//            URLImage(url: url, resizable: .fit)
+//        }
+
+        // e.g.: https://github.com/appfair/App/releases/download/Mark-Island/Mark-Island.png
+        if let url = URL(string: "https://github.com/appfair/App/releases/download/\(owner.login)/\(owner.login).png") {
+            URLImage(url: url, resizable: .fit)
+        }
+    }
+}
+
 @available(macOS 12.0, *)
 @available(iOS, unavailable)
 @available(tvOS, unavailable)
@@ -218,8 +236,8 @@ struct ActionsTableView : View, ItemTableView {
     var tableView: some View {
         Table(selection: $selection, sortOrder: $sortOrder, columns: {
             let imageColumn = TableColumn("", value: \TableRowValue.head_repository?.owner.avatar_url, comparator: StringComparator()) { item in
-                if let avatar_url = item.head_repository?.owner.avatar_url, let url = URL(string: avatar_url) {
-                    URLImage(url: url, resizable: .fit)
+                if let owner = item.head_repository?.owner {
+                    RepoIconView(owner: owner)
                 }
             }
 
@@ -235,7 +253,7 @@ struct ActionsTableView : View, ItemTableView {
             }
 
             let tableColumnBody = Group {
-                //imageColumn.width(50)
+                imageColumn.width(50)
                 ownerColumn
                 statusColumn
                 conclusionColumn
@@ -331,10 +349,8 @@ struct ReleasesTableView : View, ItemTableView {
 
     var tableView: some View {
         Table(selection: $selection, sortOrder: $sortOrder, columns: {
-            let imageColumn: TableColumn<TableRowValue, KeyPathComparator<TableRowValue>, URLImage?, Text> = TableColumn("", value: \TableRowValue.repository.owner.avatar_url, comparator: StringComparator()) { item in
-                if let avatar_url = item.repository.owner.avatar_url, let url = URL(string: avatar_url) {
-                    URLImage(url: url, resizable: .fit)
-                }
+            let imageColumn: TableColumn<TableRowValue, KeyPathComparator<TableRowValue>, RepoIconView, Text> = TableColumn("", value: \TableRowValue.repository.owner.avatar_url, comparator: StringComparator()) { item in
+                RepoIconView(owner: item.repository.owner)
             }
 
             let nameColumn = ostrColumn(named: "Name", path: \.name)

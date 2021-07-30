@@ -18,7 +18,7 @@ import XCTest
 import FairCore
 
 @available(macOS 12.0, iOS 15.0, *)
-final class AppTests: XCTestCase {
+@MainActor final class AppTests: XCTestCase {
     func testAppScene() throws {
         let store = AppContainer.AppStore()
         let scene = AppContainer.rootScene(store: store)
