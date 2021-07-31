@@ -86,6 +86,12 @@ jobs:
           rm -rf "staging/"
           mkdir "staging/"
 
+      - name: "Archive Source"
+        run: |
+          cp -a .build/checkouts Dependencies
+          tar cvzf "staging/${{ env.APP_ARTIFACT }}-source.tgz" --exclude='.git/' --exclude='.build/' --exclude='staging/' .
+          rm -rf Dependencies
+
       - name: Update Info
         run: |
           /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string" App.plist || true
@@ -96,14 +102,14 @@ jobs:
       - name: Stage Icon
         run: cp Assets.xcassets/AppIcon.appiconset/Icon.png staging/"${{ env.APP_ARTIFACT }}.png"
 
-      - name: Build Archive
+      - name: Build macOS Archive
         run: |
           xcodebuild archive \
             -workspace "App.xcworkspace" \
             -configuration Release \
             -scheme "Application" \
             -sdk "macosx" \
-            -archivePath "${{ env.APP_ARTIFACT }}.xcarchive" \
+            -archivePath "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive" \
             CODE_SIGNING_REQUIRED=YES \
             CODE_SIGNING_ALLOWED=YES \
             PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
@@ -111,9 +117,26 @@ jobs:
             CURRENT_PROJECT_VERSION="${{ env.PRID }}" \
             FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}" 
 
+      - name: Build iOS Archive
+        run: |
+          xcodebuild archive \
+            -workspace "App.xcworkspace" \
+            -configuration Release \
+            -scheme "Application" \
+            -sdk "iphoneos" \
+            -archivePath "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
+            MARKETING_VERSION="${{ env.COMMITHASH }}" \
+            CURRENT_PROJECT_VERSION="${{ env.PRID }}" \
+            FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}" 
+
       - uses: actions/upload-artifact@v2
         with:
-          path: "${{ env.APP_ARTIFACT }}.xcarchive"
+          path: |
+            staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive
+            staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive
 
       - name: "Export Archive"
         run: |
@@ -121,7 +144,7 @@ jobs:
           xcodebuild \
             -verbose \
             -exportArchive \
-            -archivePath "${{ env.APP_ARTIFACT }}.xcarchive" \
+            -archivePath "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive" \
             -exportPath "staging/" \
             -exportOptionsPlist "staging/exportOptions.plist"
 
@@ -144,7 +167,10 @@ jobs:
       - name: "Upload Build Artifacts"
         uses: actions/upload-artifact@v2
         with:
-          path: "staging/${{ env.APP_ARTIFACT }}.zip"
+          path: |
+            staging/${{ env.APP_ARTIFACT }}.zip
+            staging/${{ env.APP_ARTIFACT }}.png
+            staging/${{ env.APP_ARTIFACT }}-source.tgz
 
       - name: "Create App Release"
         uses: "marvinpinto/action-automatic-releases@latest"
@@ -156,4 +182,6 @@ jobs:
           files: |
             staging/${{ env.APP_ARTIFACT }}.zip
             staging/${{ env.APP_ARTIFACT }}.png
+            staging/${{ env.APP_ARTIFACT }}-source.tgz
+
 
