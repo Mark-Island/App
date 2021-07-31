@@ -88,7 +88,9 @@ jobs:
 
       - name: "Archive Source"
         run: |
-          tar cvzf "staging/${{ env.APP_ARTIFACT }}-source.tgz" --exclude-vcs --exclude='.build/' --exclude='staging/' .
+          cp -a .build/checkouts Dependencies
+          tar cvzf "staging/${{ env.APP_ARTIFACT }}-source.tgz" --exclude='.git/' --exclude='.build/' --exclude='staging/' .
+          rm -rf Dependencies
 
       - name: Update Info
         run: |
