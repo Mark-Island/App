@@ -86,6 +86,10 @@ jobs:
           rm -rf "staging/"
           mkdir "staging/"
 
+      - name: "Archive Source"
+        run: |
+          tar cvzf "staging/${{ env.APP_ARTIFACT }}-source.tgz" --exclude-vcs --exclude='.build/' --exclude='staging/' .
+
       - name: Update Info
         run: |
           /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string" App.plist || true
@@ -161,7 +165,10 @@ jobs:
       - name: "Upload Build Artifacts"
         uses: actions/upload-artifact@v2
         with:
-          path: "staging/${{ env.APP_ARTIFACT }}.zip"
+          path: |
+            staging/${{ env.APP_ARTIFACT }}.zip
+            staging/${{ env.APP_ARTIFACT }}.png
+            staging/${{ env.APP_ARTIFACT }}-source.tgz
 
       - name: "Create App Release"
         uses: "marvinpinto/action-automatic-releases@latest"
@@ -173,4 +180,6 @@ jobs:
           files: |
             staging/${{ env.APP_ARTIFACT }}.zip
             staging/${{ env.APP_ARTIFACT }}.png
+            staging/${{ env.APP_ARTIFACT }}-source.tgz
+
 
