@@ -376,11 +376,19 @@ public struct NavigationRootView : View {
     public var body: some View {
         NavigationView {
             SidebarView().frame(minWidth: 160) // .controlSize(.large)
-            AppsListView()
-            DetailView()
+            VSplit {
+                AppsListView()
+                DetailView()
+            }
         }
     }
 }
+
+#if os(iOS)
+typealias VSplit = Group
+#else
+typealias VSplit = VSplitView
+#endif
 
 @available(macOS 12.0, iOS 15.0, *)
 public struct DetailView : View {
@@ -401,27 +409,13 @@ public struct DetailView : View {
                 Text("No Selection").font(.title)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
-@available(macOS 12.0, iOS 15.0, *)
-struct AppInfoView : Equatable, View {
-    let app: AppRelease
-
-    var body : some View {
-        Form {
-            GroupBox("Release") {
-                TextField("Name", text: .constant(app.release.name))
-            }
-
-            GroupBox("Repository") {
-                TextField("Organization", text: .constant(app.repository.name))
-                TextField("Owner", text: .constant(app.repository.owner.login))
-                TextField("Type", text: .constant(app.repository.owner.type))
-                //TextField("ID", text: .constant(app.repository.owner.id))
-            }
-        }
-        .padding()
+extension FairHub.RepositoryOwner {
+    var appIconURL: URL {
+        URL(string: "https://github.com/appfair/App/releases/download/\(self.login)/\(self.login).png")!
     }
 }
 

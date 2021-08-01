@@ -180,16 +180,7 @@ struct RepoIconView : Equatable, View {
     let owner: FairHub.RepositoryOwner
 
     var body: some View {
-        // https://github.com/appfair/App/releases/download/Mark-Island/Mark-Island.png
-
-//        if let avatar_url = owner.avatar_url, let url = URL(string: avatar_url) {
-//            URLImage(url: url, resizable: .fit)
-//        }
-
-        // e.g.: https://github.com/appfair/App/releases/download/Mark-Island/Mark-Island.png
-        if let url = URL(string: "https://github.com/appfair/App/releases/download/\(owner.login)/\(owner.login).png") {
-            URLImage(url: url, resizable: .fit)
-        }
+        URLImage(url: owner.appIconURL, resizable: .fit)
     }
 }
 
