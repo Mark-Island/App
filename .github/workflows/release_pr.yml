@@ -167,10 +167,7 @@ jobs:
       - name: "Upload Build Artifacts"
         uses: actions/upload-artifact@v2
         with:
-          path: |
-            staging/${{ env.APP_ARTIFACT }}.zip
-            staging/${{ env.APP_ARTIFACT }}.png
-            staging/${{ env.APP_ARTIFACT }}-source.tgz
+          path: staging
 
       - name: "Create App Release"
         uses: "marvinpinto/action-automatic-releases@latest"
@@ -183,5 +180,8 @@ jobs:
             staging/${{ env.APP_ARTIFACT }}.zip
             staging/${{ env.APP_ARTIFACT }}.png
             staging/${{ env.APP_ARTIFACT }}-source.tgz
+            App.entitlements
+            App.plist
+            Package.resolved
 
 
