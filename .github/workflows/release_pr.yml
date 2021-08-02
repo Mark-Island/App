@@ -155,8 +155,8 @@ jobs:
       - name: Stage Info.plist
         run: |
           find "staging/" -type f
-          plutil -convert json -r -o "staging/${{ env.APP_ARTIFACT }}-macOS.plist" -- "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Info.plist"
-          plutil -convert json -r -o "staging/${{ env.APP_ARTIFACT }}-iOS.plist" -- "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Info.plist"
+          plutil -convert json -r -o "staging/${{ env.APP_ARTIFACT }}-macOS.plist" -- "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Contents/Info.plist"
+          plutil -convert json -r -o "staging/${{ env.APP_ARTIFACT }}-iOS.plist" -- "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Contents/Info.plist"
 
 
       - name: "Upload Build Artifacts"
