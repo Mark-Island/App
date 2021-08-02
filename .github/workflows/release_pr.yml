@@ -132,6 +132,10 @@ jobs:
             CURRENT_PROJECT_VERSION="${{ env.PRID }}" \
             FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}" 
 
+      - name: Show iOS Archive
+        run: |
+          find "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive"
+
       - uses: actions/upload-artifact@v2
         with:
           path: |
