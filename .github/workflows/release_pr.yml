@@ -140,7 +140,6 @@ jobs:
         run: |
           echo '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>mac-application</string><key>signingStyle</key><string>automatic</string></dict></plist>' > "staging/exportOptions.plist"
           xcodebuild \
-            -verbose \
             -exportArchive \
             -archivePath "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive" \
             -exportPath "staging/" \
@@ -153,10 +152,13 @@ jobs:
         run: cp Assets.xcassets/AppIcon.appiconset/Icon.png staging/"${{ env.APP_ARTIFACT }}.png"
 
       - name: Stage Info.plist
+        # Extract the Info.plist from the archives themselves, since they contain
+        # the same post-processed metadata that the app will use.
+        # And convert to JSON for ease of integration.
         run: |
           find "staging/" -type f
           plutil -convert json -r -o "staging/${{ env.APP_ARTIFACT }}-macOS.plist" -- "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Contents/Info.plist"
-          plutil -convert json -r -o "staging/${{ env.APP_ARTIFACT }}-iOS.plist" -- "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Contents/Info.plist"
+          plutil -convert json -r -o "staging/${{ env.APP_ARTIFACT }}-iOS.plist" -- "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Info.plist"
 
 
       - name: "Upload Build Artifacts"
