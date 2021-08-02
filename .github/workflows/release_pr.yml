@@ -181,7 +181,7 @@ jobs:
             staging/${{ env.APP_ARTIFACT }}.png
             staging/${{ env.APP_ARTIFACT }}-source.tgz
             App.entitlements
-            App.plist
             Package.resolved
+            staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.APP_ARTIFACT }}.app/Info.plist
 
 
