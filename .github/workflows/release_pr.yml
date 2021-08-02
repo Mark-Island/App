@@ -116,6 +116,7 @@ jobs:
           cp -a "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive/Products/Applications" "staging/Payload"
           ditto -c -k --sequesterRsrc --keepParent "staging/Payload" "staging/${{ env.APP_ARTIFACT }}-iOS.ipa"
           rm -rf "staging/Payload" # cleanup
+          ls -la "staging/${{ env.APP_ARTIFACT }}-iOS.ipa"
 
 
       - name: Build macOS Archive
@@ -146,7 +147,6 @@ jobs:
             -exportOptionsPlist "staging/exportOptions.plist"
           ditto -c -k --sequesterRsrc --keepParent "staging/${{ env.PRODUCT_NAME }}.app" "staging/${{ env.APP_ARTIFACT }}-macOS.zip"
           ls -la "staging/${{ env.APP_ARTIFACT }}-macOS.zip"
-          ls -la "staging/"
 
 
       - name: Stage Icon
@@ -154,6 +154,7 @@ jobs:
 
       - name: Stage Info.plist
         run: |
+          find "staging/" -type f
           plutil -convert json -r -o "staging/${{ env.APP_ARTIFACT }}-macOS.plist" -- "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Info.plist"
           plutil -convert json -r -o "staging/${{ env.APP_ARTIFACT }}-iOS.plist" -- "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Info.plist"
 
