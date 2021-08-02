@@ -132,10 +132,6 @@ jobs:
             CURRENT_PROJECT_VERSION="${{ env.PRID }}" \
             FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}" 
 
-      - name: Show iOS Archive
-        run: |
-          find "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive"
-
       - uses: actions/upload-artifact@v2
         with:
           path: |
@@ -173,6 +169,10 @@ jobs:
         with:
           path: staging
 
+      - name: Show Staging Files
+        run: |
+          find staging/
+
       - name: "Create App Release"
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -186,6 +186,6 @@ jobs:
             staging/${{ env.APP_ARTIFACT }}-source.tgz
             App.entitlements
             Package.resolved
-            staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.APP_ARTIFACT }}.app/Info.plist
+            staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Info.plist
 
 
