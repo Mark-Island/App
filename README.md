@@ -14,3 +14,4 @@ To get started building your own app:
 6. The successful build will become available for the AppFair's [Releases Page](https://github.com/appfair/App/releases).
 7. Download, share and enjoy!
 
+
