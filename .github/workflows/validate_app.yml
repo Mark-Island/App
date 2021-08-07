@@ -17,7 +17,7 @@
 # as well as twice daily to ensure that the app remains valid.
 #
 
-name: App Vaidation
+name: App Validation
 on:
   push:
     branches: 
