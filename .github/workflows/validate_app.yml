@@ -26,7 +26,7 @@ on:
 jobs:
   Validate:
     if: github.event_name != 'pull_request_target'
-    runs-on: macos-11.0
+    runs-on: macos-11
     timeout-minutes: 20
     env:
       DEVELOPER_DIR: /Applications/Xcode_13.0.app/Contents/Developer
