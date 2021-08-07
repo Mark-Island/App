@@ -21,7 +21,7 @@
 	<key>FairAppNetworkCientUsageDescription</key>
 	<string>This app uses the network to download, install, and update apps from the catalog.</string>
 	<key>FairAppFilesUserSelectedReadWriteUsageDescription</key>
-	<string>This app installs other apps on the file system.</string>
+	<string>This app installs other apps onto the file system, and so needs to be able to read and write files.</string>
 	<key>UIDeviceFamily</key>
 	<integer>2</integer>
 	<key>UISupportedInterfaceOrientations</key>
