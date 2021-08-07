@@ -178,7 +178,7 @@ jobs:
           prerelease: true
           automatic_release_tag: "${{ env.APP_ARTIFACT }}"
           files: |
-            App.entitlements
+            Sandbox.entitlements
             Package.resolved
             staging/${{ env.APP_ARTIFACT }}.png
             staging/${{ env.APP_ARTIFACT }}-macOS.zip
