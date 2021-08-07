@@ -86,65 +86,89 @@ jobs:
           rm -rf "staging/"
           mkdir "staging/"
 
-      - name: Update Info
+      - name: "Archive Source"
         run: |
-          /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string" App.plist || true
-          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier '${{ env.BUNDLE_ID }}'" App.plist
-          /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string" App.plist || true
-          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName '${{ env.PRODUCT_NAME }}'" App.plist
+          cp -a .build/checkouts Dependencies
+          tar cvzf "staging/${{ env.APP_ARTIFACT }}-source.tgz" --exclude='.git/' --exclude='.build/' --exclude='staging/' .
+          rm -rf Dependencies
 
-      - name: Stage Icon
-        run: cp Assets.xcassets/AppIcon.appiconset/Icon.png staging/"${{ env.APP_ARTIFACT }}.png"
+      - name: Build iOS Archive
+        run: |
+          xcodebuild archive \
+            -workspace "App.xcworkspace" \
+            -configuration Release \
+            -scheme "Application" \
+            -sdk "iphoneos" \
+            -archivePath "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGN_IDENTITY="" \
+            PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
+            MARKETING_VERSION="${{ env.COMMITHASH }}" \
+            CURRENT_PROJECT_VERSION="${{ env.PRID }}" \
+            FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}" 
 
-      - name: Build Archive
+      - name: "Export iOS Archive"
+        # there's no way to export iOS archives without re-signing with a teamID, 
+        # so just build the .ipa manually; it needs to be in Staging/ first
+        run: |
+          cp -a "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive/Products/Applications" "staging/Payload"
+          ditto -c -k --sequesterRsrc --keepParent "staging/Payload" "staging/${{ env.APP_ARTIFACT }}-iOS.ipa"
+          rm -rf "staging/Payload" # cleanup
+          ls -la "staging/${{ env.APP_ARTIFACT }}-iOS.ipa"
+
+
+      - name: Build macOS Archive
         run: |
           xcodebuild archive \
             -workspace "App.xcworkspace" \
             -configuration Release \
             -scheme "Application" \
             -sdk "macosx" \
-            -archivePath "${{ env.APP_ARTIFACT }}.xcarchive" \
+            -archivePath "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive" \
             CODE_SIGNING_REQUIRED=YES \
             CODE_SIGNING_ALLOWED=YES \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGN_IDENTITY="" \
             PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
             MARKETING_VERSION="${{ env.COMMITHASH }}" \
             CURRENT_PROJECT_VERSION="${{ env.PRID }}" \
             FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}" 
 
-      - uses: actions/upload-artifact@v2
-        with:
-          path: "${{ env.APP_ARTIFACT }}.xcarchive"
-
-      - name: "Export Archive"
+      - name: "Export macOS Archive"
         run: |
           echo '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>mac-application</string><key>signingStyle</key><string>automatic</string></dict></plist>' > "staging/exportOptions.plist"
           xcodebuild \
-            -verbose \
             -exportArchive \
-            -archivePath "${{ env.APP_ARTIFACT }}.xcarchive" \
+            -archivePath "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive" \
             -exportPath "staging/" \
             -exportOptionsPlist "staging/exportOptions.plist"
+          ditto -c -k --sequesterRsrc --keepParent "staging/${{ env.PRODUCT_NAME }}.app" "staging/${{ env.APP_ARTIFACT }}-macOS.zip"
+          ls -la "staging/${{ env.APP_ARTIFACT }}-macOS.zip"
 
-      - name: "Create ${{ env.APP_ARTIFACT }}.zip"
+
+      - name: Stage Icon
+        run: cp Assets.xcassets/AppIcon.appiconset/Icon.png staging/"${{ env.APP_ARTIFACT }}.png"
+
+      - name: Stage Info.plist
+        # Extract the Info.plist from the archives themselves, since they contain
+        # the same post-processed metadata that the app will use.
+        # And convert to XML for ease of integration.
         run: |
-          find staging/ -type f
+          find "staging/" -type f
+          plutil -convert xml1 -r -o "staging/${{ env.APP_ARTIFACT }}-macOS.plist" -- "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Contents/Info.plist"
+          plutil -convert xml1 -r -o "staging/${{ env.APP_ARTIFACT }}-iOS.plist" -- "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Info.plist"
 
-          echo APP NAME "staging/${{ env.PRODUCT_NAME }}.app"
-          ls -la "staging/${{ env.PRODUCT_NAME }}.app"
-
-          echo ZIP NAME "staging/${{ env.APP_ARTIFACT }}.zip"
-
-          ditto -c -k --keepParent "staging/${{ env.PRODUCT_NAME }}.app" "staging/${{ env.APP_ARTIFACT }}.zip"
-          ls -la "staging/${{ env.APP_ARTIFACT }}.zip"
-
-          ls -la "staging/"
-            
-          unzip -t "staging/${{ env.APP_ARTIFACT }}.zip"
 
       - name: "Upload Build Artifacts"
         uses: actions/upload-artifact@v2
         with:
-          path: "staging/${{ env.APP_ARTIFACT }}.zip"
+          path: staging
+
+      - name: Show Staging Files
+        run: |
+          find staging/
 
       - name: "Create App Release"
         uses: "marvinpinto/action-automatic-releases@latest"
@@ -154,6 +178,13 @@ jobs:
           prerelease: true
           automatic_release_tag: "${{ env.APP_ARTIFACT }}"
           files: |
-            staging/${{ env.APP_ARTIFACT }}.zip
+            App.entitlements
+            Package.resolved
             staging/${{ env.APP_ARTIFACT }}.png
+            staging/${{ env.APP_ARTIFACT }}-macOS.zip
+            staging/${{ env.APP_ARTIFACT }}-macOS.plist
+            staging/${{ env.APP_ARTIFACT }}-iOS.ipa
+            staging/${{ env.APP_ARTIFACT }}-iOS.plist
+            staging/${{ env.APP_ARTIFACT }}-source.tgz
+
 
