@@ -16,7 +16,5 @@
     <false/>
     <key>com.apple.security.network.client</key>
     <false/>
-    <key>com.apple.security.network.server</key>
-    <false/>
 </dict>
 </plist>
