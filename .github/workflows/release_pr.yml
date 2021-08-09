@@ -94,10 +94,10 @@ jobs:
 
       - name: Update Info
         run: |
-          /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string" App.plist || true
-          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier '${{ env.BUNDLE_ID }}'" App.plist
-          /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string" App.plist || true
-          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName '${{ env.PRODUCT_NAME }}'" App.plist
+          /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string" Info.plist || true
+          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier '${{ env.BUNDLE_ID }}'" Info.plist
+          /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string" Info.plist || true
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName '${{ env.PRODUCT_NAME }}'" Info.plist
 
       - name: Stage Icon
         run: cp Assets.xcassets/AppIcon.appiconset/Icon.png staging/"${{ env.APP_ARTIFACT }}.png"
