@@ -25,7 +25,6 @@ on:
 
 jobs:
   Validate:
-    if: github.event_name != 'pull_request_target'
     runs-on: macos-11
     timeout-minutes: 20
     env:
@@ -46,7 +45,7 @@ jobs:
 
       - name: "Validate App Org: ${{ github.repository_owner }}"
         if: github.repository_owner != 'appfair'
-        run: xcrun swift run -- fairtool validate --verbose true --hub github.com --token "${{ secrets.GITHUB_TOKEN }}" --org "${{ github.repository_owner }}" --project .
+        run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --token "${{ secrets.GITHUB_TOKEN }}" --org "${{ github.repository_owner }}" --project .
 
       - name: Build macOS
         run: xcodebuild build -workspace App.xcworkspace -configuration Release -scheme "Application" -sdk 'macosx' CODE_SIGNING_REQUIRED=YES CODE_SIGNING_ALLOWED=YES
