@@ -19,8 +19,8 @@ import XCTest
 open class AppTests: XCTestCase {
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
     open func testAppScene() throws {
-        let _ = AppContainer().rootScene
-        let _ = AppContainer().settingsView
+        let _ = AppContainer.rootScene
+        let _ = AppContainer.settingsView
     }
 }
 
