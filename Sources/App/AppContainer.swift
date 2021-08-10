@@ -15,15 +15,6 @@
 import FairApp
 
 @available(macOS 12.0, iOS 15.0, *)
-@main public enum AppContainer : FairApp.FairContainer {
-    public static func main() throws { try launch() }
-}
-
-// Everything above this line must remain unmodified.
-
-// Define your app in an extension of `AppContainer`
-
-@available(macOS 12.0, iOS 15.0, *)
 public extension AppContainer {
     /// The body of your scene is provided by `AppContainer.scene`
     @SceneBuilder static func rootScene(store: Store) -> some SwiftUI.Scene {
