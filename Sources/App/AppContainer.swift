@@ -14,14 +14,12 @@
  */
 import FairApp
 
-@available(macOS 12.0, iOS 15.0, *)
-@main public enum AppContainer : FairApp.FairContainer {
-    public static func main() throws { try launch() }
-}
-
-// Everything above this line must remain unmodified.
-
-// Define your app in an extension of `AppContainer`
+// The entry point to creating your app is the `AppContainer` type,
+// which is a stateless enum declared in `AppMain.swift` and may not be changed.
+// 
+// App customization is done via extensions in `AppContainer.swift`,
+// which enables customization of the root scene, app settings, and
+// other features of the app.
 
 @available(macOS 12.0, iOS 15.0, *)
 public extension AppContainer {
@@ -64,3 +62,4 @@ public struct AppSettingsView : View {
         EmptyView()
     }
 }
+
