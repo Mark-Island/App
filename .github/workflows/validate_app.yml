@@ -37,15 +37,13 @@ jobs:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: |
           echo "$GITHUB_CONTEXT"
-          echo "TAG: ${{ github.event.inputs.branch }}"
-          echo "ORGNAME: ${{ github.event.pull_request.head.user.login }}"
           echo "ORGNAME=${{ github.event.pull_request.head.user.login }}" >> $GITHUB_ENV
 
       - name: Checkout Repository
         uses: actions/checkout@v2
 
       - name: "Validate App Org: ${{ github.repository_owner }}"
-        run: xcrun swift run -- fairtool validate --verbose true --hub github.com --token "${{ secrets.GITHUB_TOKEN }}" --org "${{ github.repository_owner }}" --project .
+        run: xcrun swift run -- fairtool validate --verbose true --hub github.com --token "${{ secrets.GITHUB_TOKEN }}" --org "${{ env.ORGNAME }}" --project .
 
       - name: Build macOS
         run: xcodebuild build -workspace App.xcworkspace -configuration Release -scheme "Application" -sdk 'macosx' CODE_SIGNING_REQUIRED=YES CODE_SIGNING_ALLOWED=YES
