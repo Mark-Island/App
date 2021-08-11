@@ -58,13 +58,13 @@ jobs:
         uses: actions/checkout@v2
 
       - name: "Validate App Org: ${{ env.ORGNAME }}"
-        run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project .
+        run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --allow-from '.*.EDU' --allow-from '.*.appfair.net' --token "${{ secrets.GITHUB_TOKEN }}" --project .
 
       - name: Checkout PR
         uses: actions/checkout@v2
         with:
           path: ReleasePR
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ env.COMMITHASH }}
           fetch-depth: 1
           submodules: false
 
