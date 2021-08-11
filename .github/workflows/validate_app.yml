@@ -54,4 +54,3 @@ jobs:
         run: xcodebuild build -workspace App.xcworkspace -configuration Release -scheme "Application" -sdk 'iphoneos' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
 
-
