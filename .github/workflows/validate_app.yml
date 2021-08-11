@@ -37,7 +37,7 @@ jobs:
         run: |
           echo "$GITHUB_CONTEXT"
           echo "ORGNAME=${{ github.repository_owner }}" >> $GITHUB_ENV
-          echo "COMMITHASH=${{ github.event.sha }}" >> $GITHUB_ENV
+          echo "COMMITHASH=${{ github.sha }}" >> $GITHUB_ENV
 
       - name: Checkout Repository
         uses: actions/checkout@v2

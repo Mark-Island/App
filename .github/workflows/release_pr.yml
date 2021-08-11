@@ -64,7 +64,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: ReleasePR
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ env.COMMITHASH }}
           fetch-depth: 1
           submodules: false
 
