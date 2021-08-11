@@ -37,12 +37,13 @@ jobs:
         run: |
           echo "$GITHUB_CONTEXT"
           echo "ORGNAME=${{ github.repository_owner }}" >> $GITHUB_ENV
+          echo "COMMITHASH=${{ github.sha }}" >> $GITHUB_ENV
 
       - name: Checkout Repository
         uses: actions/checkout@v2
 
       - name: "Validate App Org: ${{ env.ORGNAME }}"
-        run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --project . --output - --token "${{ secrets.GITHUB_TOKEN }}"
+        run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --project . --ref "${{ env.COMMITHASH }}" --allow-from '.*.EDU' --allow-from '.*.appfair.net' --output - --token "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Test Swift Package
         run: xcrun swift test
