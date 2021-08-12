@@ -35,7 +35,7 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_13.0.app/Contents/Developer
 
     steps:
-      - name: Show Info
+      - name: Setup
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: |
@@ -43,24 +43,18 @@ jobs:
           echo "ORGNAME=${{ github.event.pull_request.head.user.login }}" >> $GITHUB_ENV
           echo "COMMITHASH=${{ github.event.pull_request.head.sha }}" >> $GITHUB_ENV
           echo "PRID=${{ github.event.pull_request.id }}" >> $GITHUB_ENV
-
-      - name: Configure App Name
-        run: |
           echo "APP_ARTIFACT=${{ env.ORGNAME }}" >> $GITHUB_ENV
           echo "PRODUCT_NAME=$(echo ${{ env.ORGNAME }} | tr '-' ' ')" >> $GITHUB_ENV
           echo "BUNDLE_ID=app.$(echo ${{ env.ORGNAME }})" >> $GITHUB_ENV
-
-      - name: Show Product
-        run: |
           echo "BUILDING PRODUCT: ${{ env.PRODUCT_NAME }}"
       
-      - name: Checkout Base Repository
+      - name: Checkout Base Fairground
         uses: actions/checkout@v2
 
-      - name: "Validate App Org: ${{ env.ORGNAME }}"
+      - name: "Validate App-Org: ${{ env.ORGNAME }}"
         run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --allow-from '.*.EDU' --allow-from '.*.appfair.net' --token "${{ secrets.GITHUB_TOKEN }}" --project .
 
-      - name: Checkout PR
+      - name: Checkout Integrate PR
         uses: actions/checkout@v2
         with:
           path: ReleasePR
@@ -68,27 +62,23 @@ jobs:
           fetch-depth: 1
           submodules: false
 
-      - name: Merging PR
-        run: xcrun swift run -- fairtool merge --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project ReleasePR --output .
-
-      - name: Validate Package.resolved
+      - name: Prepare Integrate PR
         run: |
+          xcrun swift run -- fairtool merge --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project ReleasePR --output .
           xcrun swift package resolve
           xcrun swift run -- fairtool validate --project . --hub github.com/appfair 
           #xcrun swift run -- fairtool edit --project . --hub github.com/appfair --bundle-id "${{ env.BUNDLE_ID }}" --display-name "${{ env.PRODUCT_NAME }}"
 
-      - name: "Prepare Staging"
-        run: |
           rm -rf "staging/"
           mkdir "staging/"
 
-      - name: "Archive Source"
-        run: |
           cp -a .build/checkouts Dependencies
           tar cvzf "staging/${{ env.APP_ARTIFACT }}-source.tgz" --exclude='.git/' --exclude='.build/' --exclude='staging/' .
           rm -rf Dependencies
 
-      - name: Build iOS Archive
+      - name: "Build iOS App: ${{ env.APP_ARTIFACT }}-iOS.ipa"
+        # there's no way to export iOS archives without re-signing with a teamID, 
+        # so just build the .ipa manually; it needs to be in Staging/ first
         run: |
           xcodebuild archive \
             -workspace "App.xcworkspace" \
@@ -104,18 +94,13 @@ jobs:
             MARKETING_VERSION="${{ env.COMMITHASH }}" \
             CURRENT_PROJECT_VERSION="${{ env.PRID }}" \
             FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}" 
-
-      - name: "Export iOS Archive"
-        # there's no way to export iOS archives without re-signing with a teamID, 
-        # so just build the .ipa manually; it needs to be in Staging/ first
-        run: |
           cp -a "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive/Products/Applications" "staging/Payload"
           ditto -c -k --sequesterRsrc --keepParent "staging/Payload" "staging/${{ env.APP_ARTIFACT }}-iOS.ipa"
           rm -rf "staging/Payload" # cleanup
           ls -la "staging/${{ env.APP_ARTIFACT }}-iOS.ipa"
 
 
-      - name: Build macOS Archive
+      - name: "Build macOS App: ${{ env.APP_ARTIFACT }}-macOS.zip"
         run: |
           xcodebuild archive \
             -workspace "App.xcworkspace" \
@@ -131,9 +116,6 @@ jobs:
             MARKETING_VERSION="${{ env.COMMITHASH }}" \
             CURRENT_PROJECT_VERSION="${{ env.PRID }}" \
             FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}" 
-
-      - name: "Export macOS Archive"
-        run: |
           echo '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>mac-application</string><key>signingStyle</key><string>automatic</string></dict></plist>' > "staging/exportOptions.plist"
           xcodebuild \
             -exportArchive \
@@ -143,28 +125,23 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent "staging/${{ env.PRODUCT_NAME }}.app" "staging/${{ env.APP_ARTIFACT }}-macOS.zip"
           ls -la "staging/${{ env.APP_ARTIFACT }}-macOS.zip"
 
-
-      - name: Stage Icon
-        run: cp Assets.xcassets/AppIcon.appiconset/Icon.png staging/"${{ env.APP_ARTIFACT }}.png"
-
-      - name: Stage Info.plist
+      - name: Stage Release Metadata
         # Extract the Info.plist from the archives themselves, since they contain
         # the same post-processed metadata that the app will use.
         # And convert to XML for ease of integration.
         run: |
-          find "staging/" -type f
+          cp Assets.xcassets/AppIcon.appiconset/Icon.png staging/"${{ env.APP_ARTIFACT }}.png"
           plutil -convert xml1 -r -o "staging/${{ env.APP_ARTIFACT }}-macOS.plist" -- "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Contents/Info.plist"
           plutil -convert xml1 -r -o "staging/${{ env.APP_ARTIFACT }}-iOS.plist" -- "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Info.plist"
+          find "staging/" -type f
 
 
       - name: "Upload Build Artifacts"
+        # there can only be a single release artifact at a single time, so we 
+        # additionally upload the artifacts for each build for the historical record
         uses: actions/upload-artifact@v2
         with:
           path: staging
-
-      - name: Show Staging Files
-        run: |
-          find staging/
 
       - name: "Create App Release"
         uses: "marvinpinto/action-automatic-releases@latest"
@@ -183,10 +160,10 @@ jobs:
             staging/${{ env.APP_ARTIFACT }}-iOS.plist
             staging/${{ env.APP_ARTIFACT }}-source.tgz
 
-      - name: "Rebuild App Fair Catalog"
+      - name: "Update App Fair Catalog"
         run: xcrun swift run -- fairtool catalog --verbose true --hub github.com/appfair --token "${{ secrets.GITHUB_TOKEN }}" -o staging/catalog.json
 
-      - name: "Publish App Fair Catalog"
+      - name: "Refresh App Fair Catalog"
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
