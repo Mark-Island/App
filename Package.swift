@@ -14,6 +14,8 @@ let package = Package(
     ]
 )
 
+
+
 // The following validations are required in order for the package to be integrated by the App Fair
 
 precondition(!package.dependencies.isEmpty, "package must have at least one dependency")
