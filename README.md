@@ -1,20 +1,22 @@
 # This Is Your App
 
-This project contains an [AppFair](https://www.appfair.net) app,
-which an application distribution platform for native SwiftUI applications.
+This project contains an [App Fair](https://www.appfair.net) app,
+which is an application distribution platform for native SwiftUI applications.
 Fork this project to use as the basis for your own app, 
-then submit a PR to have it automatically built and released!
+then submit a PR to have it automatically built and distributed
+through the [App Fair.app catalog browser for macOS](https://www.appfair.net)!
 
-To get started building your own app:
+The only requirement is an e-mail address ending in `.edu` that is .
 
-1. Create a new free GitHub Organization. 
-   The organization name will uniquely identify your app and 
-   consists of two short words separated by a single hyphen 
-   two distinct sequences of 3-12 letters in the Latin alphabet. 
+To get started building your own personal app:
+
+1. Create a [new free GitHub Organization](https://github.com/account/organizations/new?plan=team_free). 
+   The organization's name will uniquely identify your app and 
+   should consist of two short words (no numbers) separated by a single hyphen.
    For example: "Cookie-Time"
 2. [Fork the appfair/App repository](https://github.com/appfair/App/fork) 
-   into your new "App-Org" organization. An app-org can only contains 
-   a single app that is named "App" (literally). 
+   into your new "App-Org" organization. 
+   An app-org can only contain a single app that is named "App" (literally). 
    It must be publicly accessible at `github.com/App-Org/App.git`
 3. Update your App settings: enable Issues and Discussions for 
    your `App-Org/App` fork. 
