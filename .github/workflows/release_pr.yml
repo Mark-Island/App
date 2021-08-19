@@ -75,7 +75,7 @@ jobs:
           xcrun swift run -- fairtool merge --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --version-marker-dir "staging/" --project ReleasePR --output .
 
           xcrun swift package resolve
-          xcrun swift run -- fairtool validate --project . --hub github.com/appfair 
+          xcrun swift run -- fairtool validate --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project .
           #xcrun swift run -- fairtool edit --project . --hub github.com/appfair --bundle-id "${{ env.BUNDLE_ID }}" --display-name "${{ env.PRODUCT_NAME }}"
 
           cp -a .build/checkouts Dependencies
