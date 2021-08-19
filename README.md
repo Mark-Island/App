@@ -1,8 +1,9 @@
 # This Is Your App
 
 This project contains an [AppFair](https://www.appfair.net) app,
-which is a free, native, and secure application distribution platform
-for pure SwiftUI applications. 
+which an application distribution platform for native SwiftUI applications.
+Fork this project to use as the basis for your own app, 
+then submit a PR to have it automatically built and released!
 
 To get started building your own app:
 
@@ -30,9 +31,10 @@ To get started building your own app:
    Updating the PR is the mechanism for triggering 
    the [App Fair actions](https://github.com/appfair/App/actions) 
    that validates and builds your release and updates the App Fair catalog.
+7. [Edit this README.md](../../edit/main/README.md) file to
+   describe and document your app. 
 
 Your successful release build will shortly become available in 
-the `App Fair` catalog browser application.
+the [App Fair](https://www.appfair.net) catalog browser application.
 
 Download, share and enjoy!
-
