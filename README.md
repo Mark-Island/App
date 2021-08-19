@@ -15,4 +15,3 @@ To get started building your own app:
 7. Download, share and enjoy!
 
 
-

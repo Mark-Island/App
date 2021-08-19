@@ -29,6 +29,9 @@
 	<key>UIDeviceFamily</key>
     <integer>2</integer>
 
+    <key>NSAllowsArbitraryLoads</key>
+    <true/>
+
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
