@@ -1,14 +1,17 @@
 # This Is Your App
 
-This project contains an [App Fair](https://www.appfair.net) app,
+This project contains the shell of an [App Fair](https://www.appfair.net) app,
 which is an application distribution platform for native SwiftUI applications.
 Fork this project to use as the basis for your own app, 
 then submit a PR to have it automatically built and distributed
-through the [App Fair.app catalog browser for macOS](https://www.appfair.net)!
+through the [App Fair.app catalog browser for macOS](https://www.appfair.net).
 
-The only requirement is an e-mail address ending in `.edu` that is .
+The only requirement to distribute your app is a 
+[free GitHub account](https://github.com/signup) with an
+[associated `.edu` e-mail address](https://github.com/settings/profile), 
+as well as an idea for a fun or useful app.
 
-To get started building your own personal app:
+To get started building your own app using only your web browser:
 
 1. Create a [new free GitHub Organization](https://github.com/account/organizations/new?plan=team_free). 
    The organization's name will uniquely identify your app and 
