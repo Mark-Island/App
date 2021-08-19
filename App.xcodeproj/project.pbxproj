@@ -255,7 +255,8 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				PRODUCT_NAME = "AppFair App";
+				FAIRAPP_PRODUCT_NAME = "AppFair App";
+                PRODUCT_NAME = "$(FAIRAPP_PRODUCT_NAME)";
 				INFOPLIST_FILE = "Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -279,7 +280,8 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				PRODUCT_NAME = "AppFair App";
+				FAIRAPP_PRODUCT_NAME = "AppFair App";
+                PRODUCT_NAME = "$(FAIRAPP_PRODUCT_NAME)";
 				INFOPLIST_FILE = "Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
