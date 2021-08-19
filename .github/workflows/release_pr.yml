@@ -56,9 +56,6 @@ jobs:
       - name: Checkout Base Fairground
         uses: actions/checkout@v2
 
-      - name: "Validate App-Org: ${{ env.ORGNAME }}"
-        run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --allow-from '.*.EDU' --allow-from '.*.appfair.net' --token "${{ secrets.GITHUB_TOKEN }}" --project .
-
       - name: Checkout Integrate PR
         uses: actions/checkout@v2
         with:
@@ -66,6 +63,9 @@ jobs:
           ref: ${{ env.COMMITHASH }}
           fetch-depth: 1
           submodules: false
+
+      - name: "Validate App-Org: ${{ env.ORGNAME }}"
+        run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --allow-from '.*.EDU' --allow-from '.*.appfair.net' --token "${{ secrets.GITHUB_TOKEN }}" --project ReleasePR --output -
 
       - name: Prepare Integrate PR
         run: |
