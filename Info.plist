@@ -2,23 +2,33 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleShortVersionString</key>
-    <string>0.1.1</string>
+    <!-- the name of your app; must match your App-Org with spaces -->
+	<key>CFBundleName</key>
+    <string>App Org</string>
 
+    <!-- the bundle ID, which must be: "app.App-Org" with your app org name -->
+	<key>CFBundleIdentifier</key>
+    <string>app.App-Org</string>
+
+    <!-- the semantic release in the form MAJOR.MINOR.PATCH -->
+	<key>CFBundleShortVersionString</key>
+    <string>0.0.1</string>
+
+    <!-- the monotonically non-decreasing build number -->
 	<key>CFBundleVersion</key>
     <string>1</string>
-
-	<key>CFBundleExecutable</key>
-    <string>$(EXECUTABLE_NAME)</string>
-
-	<key>CFBundleIdentifier</key>
-    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 
 	<key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
 
-	<key>CFBundleName</key>
-    <string>$(PRODUCT_NAME)</string>
+	<key>UIDeviceFamily</key>
+    <integer>2</integer>
+
+    <key>NSAllowsArbitraryLoads</key>
+    <true/>
+
+	<key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
 
 	<key>CFBundlePackageType</key>
     <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
@@ -26,11 +36,6 @@
 	<key>LSMinimumSystemVersion</key>
     <string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 
-	<key>UIDeviceFamily</key>
-    <integer>2</integer>
-
-    <key>NSAllowsArbitraryLoads</key>
-    <true/>
 
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
