@@ -5,19 +5,21 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<string>app.Mark-Island</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
+	<string>Mark Island</string>
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.16</string>
+	<string>0.1.2</string>
 	<key>CFBundleVersion</key>
-	<string>231</string>
+	<string>232</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSAllowsArbitraryLoads</key>
+	<true/>
 	<key>UIDeviceFamily</key>
 	<integer>2</integer>
 	<key>UISupportedInterfaceOrientations</key>
