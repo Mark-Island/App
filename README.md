@@ -23,7 +23,7 @@ To get started building your own app using only your web browser:
    It must be publicly accessible at `github.com/App-Org/App.git`
 3. Update your App settings: enable Issues and Discussions for 
    your `App-Org/App` fork. 
-   Issues & Discussions are required to remain active to act as
+   Issues & Discussions are required to remain active to facilitate
    communication channels between the developer and end-users of the app. 
 4. [Edit Info.plist](../../edit/main/Info.plist) and update 
    the `CFBundleName` to be "App Org" (the app name with a space) 
