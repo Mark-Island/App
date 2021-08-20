@@ -48,9 +48,16 @@ public struct ContentView: View {
     @EnvironmentObject var store: Store
 
     public var body: some View {
-        Text("Welcome to Fair Ground!")
+        VStack(spacing: 20) {
+            Text("""
+            Welcome to the **[Fair Ground](https://www.appfair.net)**!
+            """)
             .font(.largeTitle)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .multilineTextAlignment(.center)
+        .allowsTightening(true)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+
     }
 }
 
