@@ -3,13 +3,14 @@ import PackageDescription
 
 let package = Package(
     name: "App",
+    defaultLocalization: "en",
     platforms: [ .macOS(.v11), .iOS(.v14) ],
     products: [ .library(name: "App", targets: ["App"]) ],
     dependencies: [
         .package(name: "Fair", url: "https://github.com/appfair/Fair.git", .branch("main")),
     ],
     targets: [
-        .target(name: "App", dependencies: [ .product(name: "FairApp", package: "Fair") ], resources: [.copy("Bundle")]),
+        .target(name: "App", dependencies: [ .product(name: "FairApp", package: "Fair") ], resources: [.process("Resources"), .copy("Bundle")]),
         .testTarget(name: "AppTests", dependencies: [.product(name: "FairApp", package: "Fair")]),
     ]
 )

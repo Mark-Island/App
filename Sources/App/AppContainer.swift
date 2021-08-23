@@ -46,15 +46,35 @@ public extension AppContainer {
 @available(macOS 12.0, iOS 15.0, *)
 public struct ContentView: View {
     @EnvironmentObject var store: Store
+    let appName = Bundle.main.bundleDisplayName ?? Bundle.main.bundleName ?? "Fair App"
+    let appID = Bundle.main.bundleIdentifier ?? "app.App-Org"
+    let issuesURL = URL.fairHubURL("issues")!
+    let discussionsURL = URL.fairHubURL("discussions")!
 
     public var body: some View {
-        VStack(spacing: 20) {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Welcome \(appName)", bundle: .module)
+                .font(.largeTitle)
+                .multilineTextAlignment(.center)
+
+            Text("App Checklist:", bundle: .module)
+                .font(.title)
+                .multilineTextAlignment(.center)
+
             Text("""
-            Welcome to the **[Fair Ground](https://www.appfair.net)**!
-            """)
-            .font(.largeTitle)
+                1. Edit the *CFBundleName* in the `Info.plist`: \(appName)
+                2. Edit the *CFBundleIdentifier* in the `Info.plist`: \(appID)
+                3. Verify issues are enabled at: [\(issuesURL.absoluteString)](\(issuesURL.absoluteString))
+                4. Verify discussions are enabled at: [\(discussionsURL.absoluteString)](\(discussionsURL.absoluteString))
+                """, bundle: .module)
+                .font(.title2)
+
+            Spacer()
+
+            Text(verbatim: "[https://www.appfair.net](https://www.appfair.net)")
+                .font(.caption)
+                .multilineTextAlignment(.center)
         }
-        .multilineTextAlignment(.center)
         .allowsTightening(true)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
 
