@@ -1,5 +1,7 @@
 // Japanese strings for this App Fair app.
 // Translators wanted! Simply edit this file…
 
-"Ok" = "OK";
-"Cancel" = "キャンセル";
+"OK" = "了解";
+"Cancel" = "キャンセルする";
+"Welcome to %@!" = "%@ へようこそ！";
+
