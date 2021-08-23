@@ -56,9 +56,6 @@ jobs:
       - name: Checkout Base Fairground
         uses: actions/checkout@v2
 
-      - name: "Validate App-Org: ${{ env.ORGNAME }}"
-        run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --allow-from '.*.EDU' --allow-from '.*.appfair.net' --token "${{ secrets.GITHUB_TOKEN }}" --project .
-
       - name: Checkout Integrate PR
         uses: actions/checkout@v2
         with:
@@ -67,19 +64,46 @@ jobs:
           fetch-depth: 1
           submodules: false
 
-      - name: Prepare Integrate PR
-        run: |
-          xcrun swift run -- fairtool merge --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project ReleasePR --output .
-          xcrun swift package resolve
-          xcrun swift run -- fairtool validate --project . --hub github.com/appfair 
-          #xcrun swift run -- fairtool edit --project . --hub github.com/appfair --bundle-id "${{ env.BUNDLE_ID }}" --display-name "${{ env.PRODUCT_NAME }}"
+      - name: "Validate App-Org: ${{ env.ORGNAME }}"
+        run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --allow-from '.*.EDU' --allow-from '.*.appfair.net' --token "${{ secrets.GITHUB_TOKEN }}" --project ReleasePR --output -
 
+      - name: Integrate PR
+        run: |
           rm -rf "staging/"
           mkdir "staging/"
+
+          xcrun swift run -- fairtool merge --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --version-marker-dir "staging/" --project ReleasePR --output .
+
+          xcrun swift package resolve
+          xcrun swift run -- fairtool validate --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project .
+          #xcrun swift run -- fairtool edit --project . --hub github.com/appfair --bundle-id "${{ env.BUNDLE_ID }}" --display-name "${{ env.PRODUCT_NAME }}"
 
           cp -a .build/checkouts Dependencies
           tar cvzf "staging/${{ env.APP_ARTIFACT }}-source.tgz" --exclude='.git/' --exclude='.build/' --exclude='staging/' .
           rm -rf Dependencies
+
+      - name: "Build macOS App: ${{ env.APP_ARTIFACT }}-macOS.zip"
+        run: |
+          xcodebuild archive \
+            -workspace "App.xcworkspace" \
+            -configuration Release \
+            -scheme "Application" \
+            -sdk "macosx" \
+            -archivePath "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive" \
+            CODE_SIGNING_REQUIRED=YES \
+            CODE_SIGNING_ALLOWED=YES \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGN_IDENTITY="" \
+            PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
+            FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
+          echo '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>mac-application</string><key>signingStyle</key><string>automatic</string></dict></plist>' > "staging/exportOptions.plist"
+          xcodebuild \
+            -exportArchive \
+            -archivePath "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive" \
+            -exportPath "staging/" \
+            -exportOptionsPlist "staging/exportOptions.plist"
+          ditto -c -k --sequesterRsrc --keepParent "staging/${{ env.PRODUCT_NAME }}.app" "staging/${{ env.APP_ARTIFACT }}-macOS.zip"
+          ls -la "staging/${{ env.APP_ARTIFACT }}-macOS.zip"
 
       - name: "Build iOS App: ${{ env.APP_ARTIFACT }}-iOS.ipa"
         # there's no way to export iOS archives without re-signing with a teamID, 
@@ -96,39 +120,12 @@ jobs:
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
             CODE_SIGN_IDENTITY="" \
             PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
-            MARKETING_VERSION="${{ env.COMMITHASH }}" \
-            CURRENT_PROJECT_VERSION="${{ env.PRID }}" \
-            FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}" 
+            FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
           cp -a "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive/Products/Applications" "staging/Payload"
           ditto -c -k --sequesterRsrc --keepParent "staging/Payload" "staging/${{ env.APP_ARTIFACT }}-iOS.ipa"
           rm -rf "staging/Payload" # cleanup
           ls -la "staging/${{ env.APP_ARTIFACT }}-iOS.ipa"
 
-
-      - name: "Build macOS App: ${{ env.APP_ARTIFACT }}-macOS.zip"
-        run: |
-          xcodebuild archive \
-            -workspace "App.xcworkspace" \
-            -configuration Release \
-            -scheme "Application" \
-            -sdk "macosx" \
-            -archivePath "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive" \
-            CODE_SIGNING_REQUIRED=YES \
-            CODE_SIGNING_ALLOWED=YES \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            CODE_SIGN_IDENTITY="" \
-            PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
-            MARKETING_VERSION="${{ env.COMMITHASH }}" \
-            CURRENT_PROJECT_VERSION="${{ env.PRID }}" \
-            FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}" 
-          echo '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>mac-application</string><key>signingStyle</key><string>automatic</string></dict></plist>' > "staging/exportOptions.plist"
-          xcodebuild \
-            -exportArchive \
-            -archivePath "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive" \
-            -exportPath "staging/" \
-            -exportOptionsPlist "staging/exportOptions.plist"
-          ditto -c -k --sequesterRsrc --keepParent "staging/${{ env.PRODUCT_NAME }}.app" "staging/${{ env.APP_ARTIFACT }}-macOS.zip"
-          ls -la "staging/${{ env.APP_ARTIFACT }}-macOS.zip"
 
       - name: Stage Release Metadata
         # Extract the Info.plist from the archives themselves, since they contain
@@ -158,6 +155,7 @@ jobs:
           files: |
             Sandbox.entitlements
             Package.resolved
+            staging/version-*-*
             staging/${{ env.APP_ARTIFACT }}.png
             staging/${{ env.APP_ARTIFACT }}-macOS.zip
             staging/${{ env.APP_ARTIFACT }}-macOS.plist
@@ -177,6 +175,5 @@ jobs:
           automatic_release_tag: "catalog"
           files: |
             staging/fairapps.json
-
 
 
