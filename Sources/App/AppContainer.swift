@@ -52,32 +52,36 @@ public struct ContentView: View {
     let discussionsURL = URL.fairHubURL("discussions")!
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Welcome \(appName)", bundle: .module)
+        VStack(spacing: 20) {
+            Spacer()
+
+            Text("Welcome to \(appName)!", bundle: .module)
                 .font(.largeTitle)
-                .multilineTextAlignment(.center)
-
-            Text("App Checklist:", bundle: .module)
-                .font(.title)
-                .multilineTextAlignment(.center)
-
-            Text("""
-                1. Edit the *CFBundleName* in the `Info.plist`: \(appName)
-                2. Edit the *CFBundleIdentifier* in the `Info.plist`: \(appID)
-                3. Verify issues are enabled at: [\(issuesURL.absoluteString)](\(issuesURL.absoluteString))
-                4. Verify discussions are enabled at: [\(discussionsURL.absoluteString)](\(discussionsURL.absoluteString))
-                """, bundle: .module)
-                .font(.title2)
 
             Spacer()
 
-            Text(verbatim: "[https://www.appfair.net](https://www.appfair.net)")
-                .font(.caption)
+            Text("""
+                **App Checklist**:
+
+                1. Edit the *CFBundleName* in the `Info.plist`: `\(appName)`
+                2. Edit the *CFBundleIdentifier* in the `Info.plist`: `\(appID)`
+                3. Verify issues are enabled at: [\(issuesURL.absoluteString)](\(issuesURL.absoluteString))
+                4. Verify discussions are enabled at: [\(discussionsURL.absoluteString)](\(discussionsURL.absoluteString))
+                """)
+                .font(.title2)
+                .multilineTextAlignment(.leading)
+
+            Spacer()
+
+            Text("[https://www.appfair.net](https://www.appfair.net)")
+                .font(.footnote)
                 .multilineTextAlignment(.center)
+                .padding()
+
         }
+        .multilineTextAlignment(.center)
         .allowsTightening(true)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-
     }
 }
 
