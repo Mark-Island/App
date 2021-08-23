@@ -1,3 +1,5 @@
+// English strings for this App Fair app.
+// Translators wanted! Simply edit this file…
 
-"Welcome %@" = "Welcome to %@!";
-
+"OK" = "OK";
+"Cancel" = "Cancel";
