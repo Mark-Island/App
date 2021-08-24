@@ -164,7 +164,9 @@ jobs:
             staging/${{ env.APP_ARTIFACT }}-source.tgz
 
       - name: "Update App Fair Catalog"
-        run: xcrun swift run -- fairtool catalog --verbose true --hub github.com/appfair --token "${{ secrets.GITHUB_TOKEN }}" -o staging/fairapps.json
+        run: |
+          xcrun swift run -- fairtool catalog --verbose true --hub github.com/appfair --token "${{ secrets.GITHUB_TOKEN }}" -o staging/fairapps.json
+          gzip --stdout staging/fairapps.json > staging/fairapps.json.gz
 
       - name: "Refresh App Fair Catalog"
         uses: "marvinpinto/action-automatic-releases@latest"
@@ -175,5 +177,6 @@ jobs:
           automatic_release_tag: "catalog"
           files: |
             staging/fairapps.json
+            staging/fairapps.json.gz
 
 
