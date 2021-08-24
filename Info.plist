@@ -43,6 +43,9 @@
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
+    </array>
+
+	<key>NSHumanReadableCopyright</key>
+    <string>Copyleft Forever by Everyone</string>
 </dict>
 </plist>
