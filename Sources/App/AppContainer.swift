@@ -42,46 +42,13 @@ public extension AppContainer {
     @AppStorage("someToggle") public var someToggle = false
 }
 
-
 @available(macOS 12.0, iOS 15.0, *)
 public struct ContentView: View {
     @EnvironmentObject var store: Store
-    let appName = Bundle.main.bundleDisplayName ?? Bundle.main.bundleName ?? "Fair App"
-    let appID = Bundle.main.bundleIdentifier ?? "app.App-Org"
-    let issuesURL = URL.fairHubURL("issues")!
-    let discussionsURL = URL.fairHubURL("discussions")!
 
     public var body: some View {
-        VStack(spacing: 20) {
-            Spacer()
-
-            Text("Welcome to \(appName)!", bundle: .module)
-                .font(.largeTitle)
-
-            Spacer()
-
-            Text("""
-                **App Checklist**:
-
-                1. Edit the *CFBundleName* in the `Info.plist`: `\(appName)`
-                2. Edit the *CFBundleIdentifier* in the `Info.plist`: `\(appID)`
-                3. Verify issues are enabled at: [\(issuesURL.absoluteString)](\(issuesURL.absoluteString))
-                4. Verify discussions are enabled at: [\(discussionsURL.absoluteString)](\(discussionsURL.absoluteString))
-                """)
-                .font(.title2)
-                .multilineTextAlignment(.leading)
-
-            Spacer()
-
-            Text("[https://www.appfair.net](https://www.appfair.net)")
-                .font(.footnote)
-                .multilineTextAlignment(.center)
-                .padding()
-
-        }
-        .multilineTextAlignment(.center)
-        .allowsTightening(true)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // This is the initial screen of your app
+        FairPlaceholderView()
     }
 }
 

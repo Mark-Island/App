@@ -15,7 +15,13 @@ let package = Package(
     ]
 )
 
-// The following validations are required in order for the package to be integrated by the App Fair
+// MARK: fair-ground package validation
+
+// The following validations are required in order for 
+// the package to be integrated by the App Fair.
+//
+// These lines can be removed from your project, but the
+// rules will be enforced during the `integrate` phase regardless.
 
 precondition(package.name == "App", "Package.swift name must be 'App', but was: '\(package.name)'")
 precondition(!package.dependencies.isEmpty, "Package.swift must have at least one dependency")
