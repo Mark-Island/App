@@ -9,11 +9,13 @@
 /* Begin PBXBuildFile section */
 		4955541D268931C4003F1B5B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4955541C268931C4003F1B5B /* Assets.xcassets */; };
 		498DD184268CDB4600B79D43 /* App in Frameworks */ = {isa = PBXBuildFile; productRef = 498DD183268CDB4600B79D43 /* App */; };
+		4999152626E22A8500153ED0 /* AVKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4999152526E22A8500153ED0 /* AVKit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		49555415268931C1003F1B5B /* APPNAME.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = APPNAME.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		49555415268931C1003F1B5B /* AppFair App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "AppFair App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4955541C268931C4003F1B5B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		4999152526E22A8500153ED0 /* AVKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVKit.framework; path = System/Library/Frameworks/AVKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -21,6 +23,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4999152626E22A8500153ED0 /* AVKit.framework in Frameworks */,
 				498DD184268CDB4600B79D43 /* App in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -31,6 +34,7 @@
 		49372E752689388E00100F18 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				4999152526E22A8500153ED0 /* AVKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -47,7 +51,7 @@
 		49555416268931C1003F1B5B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				49555415268931C1003F1B5B /* APPNAME.app */,
+				49555415268931C1003F1B5B /* AppFair App.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -55,9 +59,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		49555414268931C1003F1B5B /* APPNAME */ = {
+		49555414268931C1003F1B5B /* AppFairApp */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "APPNAME" */;
+			buildConfigurationList = 49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "AppFairApp" */;
 			buildPhases = (
 				49555411268931C1003F1B5B /* Sources */,
 				49555412268931C1003F1B5B /* Frameworks */,
@@ -67,12 +71,12 @@
 			);
 			dependencies = (
 			);
-			name = Application;
+			name = AppFairApp;
 			packageProductDependencies = (
 				498DD183268CDB4600B79D43 /* App */,
 			);
-			productName = APPNAME;
-			productReference = 49555415268931C1003F1B5B /* APPNAME.app */;
+			productName = App;
+			productReference = 49555415268931C1003F1B5B /* AppFair App.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -89,7 +93,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 49555410268931C1003F1B5B /* Build configuration list for PBXProject "APP-NAME" */;
+			buildConfigurationList = 49555410268931C1003F1B5B /* Build configuration list for PBXProject "project" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -102,7 +106,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				49555414268931C1003F1B5B /* APPNAME */,
+				49555414268931C1003F1B5B /* AppFairApp */,
 			);
 		};
 /* End PBXProject section */
@@ -247,8 +251,9 @@
 		49555426268931C4003F1B5B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "Sandbox.entitlements";
+				CODE_SIGN_ENTITLEMENTS = Sandbox.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -256,14 +261,15 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				FAIRAPP_PRODUCT_NAME = "AppFair App";
-                PRODUCT_NAME = "$(FAIRAPP_PRODUCT_NAME)";
-				INFOPLIST_FILE = "Info.plist";
+				INFOPLIST_FILE = Info.plist;
+				IOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				IOS_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "app.App-Org";
+				PRODUCT_NAME = "$(FAIRAPP_PRODUCT_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 			};
@@ -272,8 +278,9 @@
 		49555427268931C4003F1B5B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "Sandbox.entitlements";
+				CODE_SIGN_ENTITLEMENTS = Sandbox.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -281,14 +288,15 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				FAIRAPP_PRODUCT_NAME = "AppFair App";
-                PRODUCT_NAME = "$(FAIRAPP_PRODUCT_NAME)";
-				INFOPLIST_FILE = "Info.plist";
+				INFOPLIST_FILE = Info.plist;
+				IOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				IOS_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "app.App-Org";
+				PRODUCT_NAME = "$(FAIRAPP_PRODUCT_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 			};
@@ -297,7 +305,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		49555410268931C1003F1B5B /* Build configuration list for PBXProject "APP-NAME" */ = {
+		49555410268931C1003F1B5B /* Build configuration list for PBXProject "project" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				49555423268931C4003F1B5B /* Debug */,
@@ -306,7 +314,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "APPNAME" */ = {
+		49555425268931C4003F1B5B /* Build configuration list for PBXNativeTarget "AppFairApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				49555426268931C4003F1B5B /* Debug */,

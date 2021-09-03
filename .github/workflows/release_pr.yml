@@ -87,22 +87,36 @@ jobs:
           xcodebuild archive \
             -workspace "App.xcworkspace" \
             -configuration Release \
-            -scheme "Application" \
+            -scheme "AppFairApp" \
             -sdk "macosx" \
             -archivePath "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive" \
             CODE_SIGNING_REQUIRED=YES \
             CODE_SIGNING_ALLOWED=YES \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_IDENTITY="-" \
             PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
             FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
+
           echo '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>mac-application</string><key>signingStyle</key><string>automatic</string></dict></plist>' > "staging/exportOptions.plist"
+
           xcodebuild \
             -exportArchive \
             -archivePath "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive" \
             -exportPath "staging/" \
             -exportOptionsPlist "staging/exportOptions.plist"
+
+          codesign --verify --verbose=5 "staging/${{ env.PRODUCT_NAME }}.app"
+
+          # preview the info
+          codesign -dv --verbose=5 "staging/${{ env.PRODUCT_NAME }}.app"
+
+          # dump the entitlements
+          codesign -d --entitlements - "staging/${{ env.PRODUCT_NAME }}.app"
+
+          #spctl -a -vvv -t execute "staging/${{ env.PRODUCT_NAME }}.app"
+
           ditto -c -k --sequesterRsrc --keepParent "staging/${{ env.PRODUCT_NAME }}.app" "staging/${{ env.APP_ARTIFACT }}-macOS.zip"
+
           ls -la "staging/${{ env.APP_ARTIFACT }}-macOS.zip"
 
       - name: "Build iOS App: ${{ env.APP_ARTIFACT }}-iOS.ipa"
@@ -112,13 +126,13 @@ jobs:
           xcodebuild archive \
             -workspace "App.xcworkspace" \
             -configuration Release \
-            -scheme "Application" \
+            -scheme "AppFairApp" \
             -sdk "iphoneos" \
             -archivePath "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_IDENTITY="-" \
             PRODUCT_BUNDLE_IDENTIFIER="${{ env.BUNDLE_ID }}" \
             FAIRAPP_PRODUCT_NAME="${{ env.PRODUCT_NAME }}"
           cp -a "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive/Products/Applications" "staging/Payload"
@@ -132,7 +146,7 @@ jobs:
         # the same post-processed metadata that the app will use.
         # And convert to XML for ease of integration.
         run: |
-          cp Assets.xcassets/AppIcon.appiconset/Icon.png staging/"${{ env.APP_ARTIFACT }}.png"
+          cp Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png staging/"${{ env.APP_ARTIFACT }}.png"
           plutil -convert xml1 -r -o "staging/${{ env.APP_ARTIFACT }}-macOS.plist" -- "staging/${{ env.APP_ARTIFACT }}-macOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Contents/Info.plist"
           plutil -convert xml1 -r -o "staging/${{ env.APP_ARTIFACT }}-iOS.plist" -- "staging/${{ env.APP_ARTIFACT }}-iOS.xcarchive/Products/Applications/${{ env.PRODUCT_NAME }}.app/Info.plist"
           find "staging/" -type f
@@ -164,7 +178,9 @@ jobs:
             staging/${{ env.APP_ARTIFACT }}-source.tgz
 
       - name: "Update App Fair Catalog"
-        run: xcrun swift run -- fairtool catalog --verbose true --hub github.com/appfair --token "${{ secrets.GITHUB_TOKEN }}" -o staging/fairapps.json
+        run: |
+          xcrun swift run -- fairtool catalog --verbose true --hub github.com/appfair --token "${{ secrets.GITHUB_TOKEN }}" -o staging/fairapps.json.gz
+          gunzip --keep staging/fairapps.json.gz
 
       - name: "Refresh App Fair Catalog"
         uses: "marvinpinto/action-automatic-releases@latest"
@@ -175,5 +191,6 @@ jobs:
           automatic_release_tag: "catalog"
           files: |
             staging/fairapps.json
+            staging/fairapps.json.gz
 
 

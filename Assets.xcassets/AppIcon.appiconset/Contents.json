@@ -46,7 +46,7 @@
       "size" : "512x512"
     },
     {
-      "filename" : "Icon.png",
+      "filename" : "AppIcon-1024.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "512x512"
@@ -137,7 +137,7 @@
       "size" : "83.5x83.5"
     },
     {
-      "filename" : "Icon.png",
+      "filename" : "AppIcon-1024.png",
       "idiom" : "ios-marketing",
       "scale" : "1x",
       "size" : "1024x1024"
@@ -148,3 +148,4 @@
     "version" : 1
   }
 }
+
