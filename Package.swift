@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "Mark-Island",
+    name: "App",
     defaultLocalization: "en",
     platforms: [ .macOS(.v11), .iOS(.v14) ],
     products: [ .library(name: "App", targets: ["App"]) ],
