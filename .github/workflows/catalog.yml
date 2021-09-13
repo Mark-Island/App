@@ -1,0 +1,17 @@
+name: "App Fair Catalog"
+
+on:
+  workflow_dispatch:
+    inputs:
+      apporg:
+        description: 'The organization name of the App Fair fork'
+        required: true
+
+
+jobs:
+  catalog:
+    runs-on: ubuntu-latest
+    steps:
+    - run: |
+        echo "Cataloging App: ${{ github.event.inputs.apporg }}"
+
