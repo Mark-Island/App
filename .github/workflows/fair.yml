@@ -89,8 +89,8 @@ jobs:
           # show the binary checksum
           ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
           ls -la "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
-          shasum "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
-          shasum "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
+          openssl sha256 "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
+          openssl sha256 "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
 
       # Notarization is not required for the App Fair, but a developer
       # can opt to notarize their own build which will allow them to 
@@ -212,10 +212,14 @@ jobs:
         id: get_commit_message
         run: echo ::set-output name=commit_message::$(git -C ReleasePR log --format=%B -n 1 "${{ env.COMMITHASH }}")
 
-      - name: Get PR app version
+      - name: Get PR commit tag
         id: get_commit_tag
-        #run: echo ::set-output name=commit_message::$(git -C ReleasePR tag "${{ env.COMMITHASH }}") # doesn't work for some reason
-        run: echo ::set-output name=commit_tag::$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' ReleasePR/Info.plist)
+        if: false # doesn't work for some reason
+        run: echo ::set-output name=commit_message::$(git -C ReleasePR tag "${{ env.COMMITHASH }}") # doesn't work for some reason
+
+      - name: Get app version
+        id: get_app_version
+        run: echo ::set-output name=app_version::$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' ReleasePR/Info.plist)
 
       - name: "Validate App-Org: ${{ env.ORGNAME }}"
         run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --integrationTitle "${{ env.PRTITLE }}" --maxsize $[1 * 1024 * 1024] --allow-from '.*.EDU' --allow-from '.*.appfair.net' --allow-from '.*@.*' --token "${{ secrets.GITHUB_TOKEN }}" --project ReleasePR --output -
@@ -274,8 +278,8 @@ jobs:
           # show the binary checksum
           ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
           ls -la "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
-          shasum "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
-          shasum "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
+          openssl sha256 "staging/${{ env.PRODUCT_NAME }}.app/Contents/MacOS/"*
+          openssl sha256 "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
 
       - name: "Build iOS App: ${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa"
         # there's no way to export iOS archives without re-signing with a teamID, 
@@ -322,33 +326,48 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh --repo=${{ env.ORGNAME }}/App release download --dir ReleaseArtifacts -- "${{ steps.get_commit_tag.outputs.commit_tag }}"
+          gh release download --repo=${{ env.ORGNAME }}/App --dir UNTRUSTED -- "${{ steps.get_app_version.outputs.app_version }}" \
+                                                                                            || (sleep 60 && gh release download --repo=${{ env.ORGNAME }}/App --dir UNTRUSTED -- "${{ steps.get_app_version.outputs.app_version }}" ) \
+                                                                                            || (sleep 60 && gh release download --repo=${{ env.ORGNAME }}/App --dir UNTRUSTED -- "${{ steps.get_app_version.outputs.app_version }}" ) \
+                                                                                            || (sleep 60 && gh release download --repo=${{ env.ORGNAME }}/App --dir UNTRUSTED -- "${{ steps.get_app_version.outputs.app_version }}" ) 
+
 
       # compare the contents of the PR's un-trusted artifacts with
       # the contents of the base fair-ground's trusted artifacts
       - name: "Compare Trusted & Un-Trusted Artifacts"
-        run: 
-          ls -la ReleaseArtifacts/
-          #diff -r ReleaseArtifacts/
-          #"staging/${{ env.PRODUCT_NAME }}.app"
+        run: |
+          mkdir fairseal/
+          ls -la UNTRUSTED/
 
-      - name: "Create App Release"
+          mkdir fairseal/extracts/
+          ditto -xk "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" fairseal/extracts/trusted/
+          ditto -xk "UNTRUSTED/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" fairseal/extracts/UNTRUSTED/
+
+          # check that contents are identical, first excising
+          # signatures to permit custom signing & notarization
+          # find fairseal/extracts/trusted fairseal/extracts/UNTRUSTED -name _CodeSignature -type d -exec rm -r "{}" \;
+          diff -r fairseal/extracts/trusted fairseal/extracts/UNTRUSTED
+
+          ZIPSHA=$(shasum -a 256 "UNTRUSTED/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" | cut -f 1 -d ' ')
+
+          # if the seals match, we indicate success by attaching
+          # the SHA256 to the end of the release file name; client
+          # apps will use this hash to verify that the untrusted release
+          # artifact that is downloaded matches the release artifact 
+          # that was created in the trusted environment
+          echo "${ZIPSHA}" > "fairseal/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip-${{ steps.get_app_version.outputs.app_version }}-${ZIPSHA}.sha256"
+
+
+      - name: "Publish fairseal"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Creating release: ${{ env.FAIR_APP_ARTIFACT }}"
           gh release create \
             "${{ env.FAIR_APP_ARTIFACT }}" \
-            --prerelease \
-            --draft \
+            --prerelease --draft \
             -- \
-            Sandbox.entitlements \
-            Package.resolved \
-            staging/${{ env.FAIR_APP_ARTIFACT }}.png \
-            staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip \
-            staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.plist \
-            staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.ipa \
-            staging/${{ env.FAIR_APP_ARTIFACT }}-iOS.plist
+            fairseal/*.*
 
       - name: "Update App Fair Catalog"
         run: |
