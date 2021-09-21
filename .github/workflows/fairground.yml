@@ -1,4 +1,30 @@
-name: "App F-A/I-R"
+##############################################################################
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
+
+# This workflow runs in both the trusted base repository at
+# https://www.github.com/appfair/App/actions as well as in
+# and forks that have enabled actions. The latter workflow
+# will build the app and create a release in the fork's repository,
+# while the workflow in the base repository will
+# build the app a second time in a trusted environment and,
+# if the two binaries match, publish a `fairseal` hash of
+# the release artifacts for verification by the App Fair catalog
+# browser app. See https://www.appfair.net for more details.
+name: "App Fairground"
 
 on:
   push:
@@ -12,15 +38,16 @@ on:
 jobs:
   fork_apply:
     name: "Fork Apply"
-    if: github.event_name == 'push' && github.repository != 'appfair/App'
+      #if: github.event_name == 'push' && github.repository != 'appfair/App'
 
     runs-on: macos-11
     timeout-minutes: 20
 
     env:
-      DEVELOPER_DIR: /Applications/Xcode_13.0.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_13.0_beta.app/Contents/Developer
 
     steps:
+
       - name: "Initialize fair-ground"
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
@@ -38,12 +65,24 @@ jobs:
           echo "PRODUCT_NAME=$(echo ${{ env.ORGNAME }} | tr '-' ' ')" >> $GITHUB_ENV
           echo "BUNDLE_ID=app.$(echo ${{ env.ORGNAME }})" >> $GITHUB_ENV
           echo "BUILDING PRODUCT: ${{ env.PRODUCT_NAME }}"
-      
+
       - name: Checkout
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
           ref: ${{ github.ref }}
+
+      - name: "Check App Fair Catalog"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          xcrun swift run -- fairtool catalog --verbose true --hub github.com/appfair --token "${{ secrets.GITHUB_TOKEN }}" -o -
+
+      - name: "Check releases"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release list
 
       - name: "Validate App Org: ${{ env.ORGNAME }}"
         run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --token "${{ secrets.GITHUB_TOKEN }}" --project . --output -
@@ -175,7 +214,7 @@ jobs:
     runs-on: macos-11
     timeout-minutes: 15
     env:
-      DEVELOPER_DIR: /Applications/Xcode_13.0.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_13.0_beta.app/Contents/Developer
 
     steps:
       - name: "Initialize fair-ground"
@@ -222,7 +261,7 @@ jobs:
         run: echo ::set-output name=app_version::$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' ReleasePR/Info.plist)
 
       - name: "Validate App-Org: ${{ env.ORGNAME }}"
-        run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --integrationTitle "${{ env.PRTITLE }}" --maxsize $[1 * 1024 * 1024] --allow-from '.*.EDU' --allow-from '.*.appfair.net' --allow-from '.*@.*' --token "${{ secrets.GITHUB_TOKEN }}" --project ReleasePR --output -
+        run: xcrun swift run -- fairtool validate --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --integrationTitle "${{ env.PRTITLE }}" --maxsize $[1 * 1024 * 1024] --allow-from '.*.EDU' --allow-from '.*.appfair.net' --token "${{ secrets.GITHUB_TOKEN }}" --project ReleasePR --output -
 
       - name: Integrate PR
         if: startsWith(steps.get_commit_message.outputs.commit_message, 'release')
@@ -315,8 +354,7 @@ jobs:
 
 
       - name: "Upload Build Artifacts"
-        # there can only be a single release artifact at a single time, so we 
-        # additionally upload the artifacts for each build for the historical record
+        # upload the trusted artifacts for each build for future scrutiny
         uses: actions/upload-artifact@v2
         with:
           path: staging
@@ -334,53 +372,39 @@ jobs:
 
       # compare the contents of the PR's un-trusted artifacts with
       # the contents of the base fair-ground's trusted artifacts
-      - name: "Compare Trusted & Un-Trusted Artifacts"
+      - name: "Generate fairseal"
+        env:
+          GITHUB_TOKEN: ${{ secrets.APP_FAIR_BOT_TOKEN }}
         run: |
-          mkdir fairseal/
-          ls -la UNTRUSTED/
+          mkdir -p fairseal/extracts/macOS/
 
-          mkdir fairseal/extracts/
-          ditto -xk "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" fairseal/extracts/trusted/
-          ditto -xk "UNTRUSTED/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" fairseal/extracts/UNTRUSTED/
+          ls -la "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" 
+          ditto -xk "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" fairseal/extracts/macOS/trusted/
+
+          ls -la "UNTRUSTED/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip"
+          ditto -xk "UNTRUSTED/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" fairseal/extracts/macOS/UNTRUSTED/
+
+          # peek at the different binaries
+          ls -la fairseal/extracts/macOS/trusted/*.app/Contents/MacOS/ fairseal/extracts/macOS/UNTRUSTED/*.app/Contents/MacOS/
 
           # check that contents are identical, first excising
           # signatures to permit custom signing & notarization
-          # find fairseal/extracts/trusted fairseal/extracts/UNTRUSTED -name _CodeSignature -type d -exec rm -r "{}" \;
-          diff -r fairseal/extracts/trusted fairseal/extracts/UNTRUSTED
+          # find fairseal/extracts/macOS/trusted fairseal/extracts/macOS/UNTRUSTED -name _CodeSignature -type d -exec rm -r "{}" \;
+          diff -r fairseal/extracts/macOS/trusted fairseal/extracts/macOS/UNTRUSTED 
+          #|| echo "WARNING: contents differ"
 
           ZIPSHA=$(shasum -a 256 "UNTRUSTED/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" | cut -f 1 -d ' ')
 
-          # if the seals match, we indicate success by attaching
-          # the SHA256 to the end of the release file name; client
-          # apps will use this hash to verify that the untrusted release
-          # artifact that is downloaded matches the release artifact 
-          # that was created in the trusted environment
-          echo "${ZIPSHA}" > "fairseal/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip-${{ steps.get_app_version.outputs.app_version }}-${ZIPSHA}.sha256"
+          # if the seals match, we indicate success by publishing
+          # the SHA256 for the release's pull request;
+          # client apps will use this hash to verify that the untrusted
+          # release artifact that is downloaded matches the release
+          # artifact that was created in the trusted environment
+          echo xcrun swift run -- fairtool fairseal --sha256 "${ZIPSHA}" --verbose true --hub github.com/appfair --org "${{ env.ORGNAME }}" --ref "${{ env.COMMITHASH }}" --token "${{ secrets.GITHUB_TOKEN }}" --trusted-artifact "staging/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" --untrusted-artifact "UNTRUSTED/${{ env.FAIR_APP_ARTIFACT }}-macOS.zip" -o -
 
-
-      - name: "Publish fairseal"
+      - name: "Publish App Fair Catalog"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.APP_FAIR_BOT_TOKEN }}
         run: |
-          echo "Creating release: ${{ env.FAIR_APP_ARTIFACT }}"
-          gh release create \
-            "${{ env.FAIR_APP_ARTIFACT }}" \
-            --prerelease --draft \
-            -- \
-            fairseal/*.*
-
-      - name: "Update App Fair Catalog"
-        run: |
-          xcrun swift run -- fairtool catalog --verbose true --hub github.com/appfair --token "${{ secrets.GITHUB_TOKEN }}" -o staging/fairapps.json.gz
-          gunzip --keep staging/fairapps.json.gz
-
-      - name: "Refresh App Fair Catalog"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "Creating release: ${{ env.FAIR_APP_ARTIFACT }}"
-          gh release delete --yes "catalog"
-          gh release create "catalog" --title "App Fair Catalog" -- staging/fairapps.json staging/fairapps.json.gz
-          gh workflow --repo appfair/App run "App Fair Catalog" --field apporg="${{ env.ORGNAME }}"
-
+          gh workflow --repo appfair/appfair.github.io run "catalog.yml"
 
