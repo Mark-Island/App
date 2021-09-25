@@ -7,7 +7,7 @@ let package = Package(
     platforms: [ .macOS(.v11), .iOS(.v14) ],
     products: [ .library(name: "App", targets: ["App"]) ],
     dependencies: [
-        .package(name: "Fair", url: "https://github.com/appfair/Fair.git", .branch("main")),
+        .package(name: "Fair", url: "https://appfair.org/Fair.git", .branch("main")),
         .package(url: "https://github.com/stephencelis/SQLite.swift.git", from: "0.12.0"),
     ],
     targets: [
